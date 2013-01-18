@@ -12,11 +12,23 @@ function drake_drush_command() {
   $items['drake'] = array(
     'description' => 'Do something.',
     'arguments' => array(
-      'what' => 'Stuff to do.',
+      'target' => 'Task to make.',
     ),
     'options' => array(
       'file' => 'Use specified file.',
       'list' => 'List available tasks.',
+    ),
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+  );
+
+  // Hidden command to make a single task.
+  $items['drake-process'] = array(
+    'hidden' => TRUE,
+    'arguments' => array(
+      'target' => 'The target to build.',
+    ),
+    'options' => array(
+      'drake' => 'The collected tasks and actions.',
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
@@ -41,7 +53,7 @@ function drake_drush_help($section) {
 /**
  * Command callback.
  */
-function drush_drake($what = '') {
+function drush_drake($target = '') {
   $files = array();
 
   // Use a do file in the current directory.
@@ -77,11 +89,11 @@ function drush_drake($what = '') {
   }
 
   // Find the main task we're doing.
-  if (!empty($what)) {
-    if (!isset($tasks[$what])) {
-      return drush_set_error('UNKNOWN_TASK', dt('Unknown task @task', array('@task' => $what)));
+  if (!empty($target)) {
+    if (!isset($tasks[$target])) {
+      return drush_set_error('UNKNOWN_TASK', dt('Unknown task @task', array('@task' => $target)));
     }
-    $start_task = $tasks[$what];
+    $start_task = $tasks[$target];
   }
   else {
     $start_task = reset($tasks);
@@ -101,11 +113,56 @@ function drush_drake($what = '') {
 
   foreach ($run_tasks as $delta => $task) {
     drush_log(_drake_task_message($task), 'status');
-    if (_drake_run_task($task, $actions) === FALSE) {
+    // We need drush_invoke_process to use post for redispatching, as using get
+    // will loose our drake command option (as it is an array).
+    $backend_options = array(
+      'method' => 'POST',
+    );
+    $command_options = drush_redispatch_get_options();
+    // $command_options['yes'] = TRUE;
+    $command_options['drake'] = array(
+      'tasks' => $tasks,
+      'actions' => $actions,
+      'files' => $files,
+    );
+    $result = drush_invoke_process('@self', 'drake-process', array($task['name']), $command_options, $backend_options);
+    if ($result['error_status'] !== 0) {
+      return drush_set_error('TASK_FAILED', dt('Task "@task" failed, aborting.', array('@task' => $task['name'])));
+    }
+  }
+}
+
+/**
+ * Command callback to process a single target.
+ */
+function drush_drake_process($target) {
+  $drake = drush_get_option('drake', NULL);
+
+  if (empty($drake['tasks']) || empty($drake['actions'])) {
+    return drush_set_error('BAD_ARGUMENTS', dt('Bad arguments for drake-process.'));
+  }
+
+  if (isset($drake['tasks'][$target])) {
+    if (!empty($drake['files'])) {
+      // Load the drakefiles to define the functions they contain.
+      foreach ($drake['files'] as $file) {
+        // @todo investigate whether this is the most kosher way to include file.
+        include($file);
+      }
+    }
+    if (_drake_run_task($drake['tasks'][$target], $drake['actions']) === FALSE) {
+      // If error code isn't set, set a generic error message to ensure that our
+      // return code is failure..
+      if (drush_get_error() == DRUSH_SUCCESS) {
+        return drush_set_error('UNKNOWN_ERROR', dt('Task failed with an unknown error.'));
+      }
+      // Else assume that the task set the message.
       return FALSE;
     }
   }
-
+  else {
+    return drush_set_error('UNKNOWN_TASK', dt('Unknown task @task', array('@task' => $target)));
+  }
 }
 
 /**
