@@ -24,6 +24,17 @@ $tasks['task-with-failing-action'] = array(
   'action' => 'failing-action',
 );
 
+$tasks['shell-action'] = array(
+  'action' => 'shell',
+  'command' => 'echo "Slartibartfast"',
+);
+
+$tasks['failingshell-action'] = array(
+  'action' => 'shell',
+  // The Unix false command which returns a non-zero exit code.
+  'command' => 'false',
+);
+
 $actions['good-action'] = array(
   'callback' => 'test_good_action',
 );
