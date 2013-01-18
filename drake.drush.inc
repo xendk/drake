@@ -117,6 +117,16 @@ function drush_drake($target = '') {
     return;
   }
 
+  // Cleanup tasks. Move this to a dedicated function when it gets too
+  // complicated.
+  foreach ($tasks as $name => $task) {
+    // Allow single dependencies to be specified as a string.
+    if (isset($task['depends']) && is_string($task['depends'])) {
+      $task['depends'] = array($task['depends']);
+    }
+    $tasks[$name] = $task;
+  }
+
   // Find the main task we're doing.
   if (!empty($target)) {
     if (!isset($tasks[$target])) {

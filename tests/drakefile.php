@@ -42,6 +42,10 @@ $tasks['failing-shell-action'] = array(
   'command' => 'false',
 );
 
+$tasks['string-dependency'] = array(
+  'depends' => 'shell-action',
+);
+
 $actions['good-action'] = array(
   'callback' => 'test_good_action',
 );

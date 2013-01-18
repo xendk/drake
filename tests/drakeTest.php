@@ -49,6 +49,12 @@ class DrakeCase extends Drush_CommandTestCase {
     $this->assertRegExp('/Recursive dependency/', $this->getOutput());
   }
 
+  function testStringDependency() {
+    $this->drush('drake', array('string-dependency'), $this->options);
+    // Check for shell command output.
+    $this->assertRegExp('/Slartibartfast/', $this->getOutput());
+  }
+
   function testBadActions() {
     // No action or depends are useless, but not considered an error.
     $this->drush('drake', array('actionless'), $this->options);
