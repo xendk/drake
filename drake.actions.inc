@@ -10,6 +10,9 @@ function drake_standard_actions() {
     'shell' => array(
       'callback' => 'drake_action_shell',
     ),
+    'drush' => array(
+      'callback' => 'drake_action_drush',
+    ),
   );
 }
 
@@ -30,6 +33,25 @@ function drake_action_shell($context) {
   }
 
   if (!drush_shell_exec_interactive($context['command'])) {
+    return drake_action_error(dt('command failed.'));
+  }
+}
+
+/**
+ * Drake action.
+ *
+ * Execute a drush command.
+ */
+function drake_action_drush($context) {
+  if (empty($context['command'])) {
+    return drake_action_error(dt('no command specified.'));
+  }
+
+  $args = !empty($context['args']) ? $context['args'] : array();
+  $options = !empty($context['options']) ? $context['options'] : array();
+  $res = drush_invoke_process('@self', $context['command'], $args, $options, TRUE);
+
+  if (!$res || $res['error_status'] != 0) {
     return drake_action_error(dt('command failed.'));
   }
 }
