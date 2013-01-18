@@ -26,10 +26,10 @@ function drake_action_error($message) {
  */
 function drake_action_shell($context) {
   if (empty($context['command'])) {
-    drake_action_error(dt('no command specified.'));
+    return drake_action_error(dt('no command specified.'));
   }
 
   if (!drush_shell_exec_interactive($context['command'])) {
-    drake_action_error(dt('command failed.'));
+    return drake_action_error(dt('command failed.'));
   }
 }
