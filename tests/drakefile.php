@@ -13,7 +13,14 @@ $tasks['recur3'] = array(
 );
 
 $tasks['actionless'] = array(
+);
+
+$tasks['unknown-action'] = array(
   'action' => 'unknown', // Undefined action.
+);
+
+$tasks['unknown-action-callback'] = array(
+  'action' => 'bad-callback',
 );
 
 $tasks['task-with-working-action'] = array(
@@ -29,7 +36,7 @@ $tasks['shell-action'] = array(
   'command' => 'echo "Slartibartfast"',
 );
 
-$tasks['failingshell-action'] = array(
+$tasks['failing-shell-action'] = array(
   'action' => 'shell',
   // The Unix false command which returns a non-zero exit code.
   'command' => 'false',
@@ -41,6 +48,10 @@ $actions['good-action'] = array(
 
 $actions['failing-action'] = array(
   'callback' => 'test_failing_action',
+);
+
+$actions['bad-callback'] = array(
+  'callback' => 'does not exist',
 );
 
 function test_good_action($context) {

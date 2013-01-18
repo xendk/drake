@@ -15,7 +15,7 @@ function drake_standard_actions() {
 
 function drake_action_error($message) {
   $context = &drush_get_context('DRAKE_RUN');
-  $message = dt('@action action failed: ', array('@action' => $context['action']['name'])) . $message;
+  $message = dt('Action "@action" failed: ', array('@action' => $context['action']['name'])) . $message;
   return drush_set_error('DRAKE_TASK_ERROR', $message);
 }
 

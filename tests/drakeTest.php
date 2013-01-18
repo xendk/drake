@@ -44,18 +44,26 @@ class DrakeCase extends Drush_CommandTestCase {
   // }
 
   function testRecursiveFail() {
-    // Hack for outputting stuff: fwrite(STDOUT, "test\n");
-
-    $this->drush('drake', array('recur1'), $this->options, NULL, NULL, self::EXIT_ERROR);
+    $this->drush('drake 2>&1', array('recur1'), $this->options, NULL, NULL, self::EXIT_ERROR);
+    // Check error message.
+    $this->assertRegExp('/Recursive dependency/', $this->getOutput());
   }
 
-  function testMissingAction() {
-    $this->drush('drake', array('actionless'), $this->options, NULL, NULL, self::EXIT_ERROR);
+  function testBadActions() {
+    // No action or depends are useless, but not considered an error.
+    $this->drush('drake', array('actionless'), $this->options);
+
+    $this->drush('drake 2>&1', array('unknown-action'), $this->options, NULL, NULL, self::EXIT_ERROR);
+    $this->assertRegExp('/Unknown action "unknown"./', $this->getOutput());
+
+    $this->drush('drake 2>&1', array('unknown-action-callback'), $this->options, NULL, NULL, self::EXIT_ERROR);
+    $this->assertRegExp('/Callback for action "bad-callback" does not exist./', $this->getOutput());
   }
 
   function testBasicActions() {
     $this->drush('drake', array('task-with-working-action'), $this->options);
-    $this->drush('drake', array('task-with-failing-action'), $this->options, NULL, NULL, self::EXIT_ERROR);
+
+    $this->drush('drake 2>&1', array('task-with-failing-action'), $this->options, NULL, NULL, self::EXIT_ERROR);
   }
 
   function testShellAction() {
@@ -64,7 +72,8 @@ class DrakeCase extends Drush_CommandTestCase {
     $this->assertRegExp('/Slartibartfast/', $this->getOutput());
 
     // Failing commands should fail the whole process.
-    $this->drush('drake', array('failing-shell-action'), $this->options, NULL, NULL, self::EXIT_ERROR);
+    $this->drush('drake 2>&1', array('failing-shell-action'), $this->options, NULL, NULL, self::EXIT_ERROR);
+    $this->assertRegExp('/Action "shell" failed: command failed./', $this->getOutput());
 
   }
 }

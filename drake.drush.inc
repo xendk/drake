@@ -190,6 +190,10 @@ function _drake_check_task($task, $actions) {
     if (!isset($actions[$task['action']])) {
       return drush_set_error("UNKNOWN_ACTION", dt('Unknown action "@action".', array('@action' => $task['action'])));
     }
+    elseif (empty($actions[$task['action']]['callback']) ||
+      !function_exists($actions[$task['action']]['callback'])) {
+      return drush_set_error("UNKNOWN_ACTION_CALLBACK", dt('Callback for action "@action" does not exist.', array('@action' => $task['action'])));
+    }
   }
   return TRUE;
 }
