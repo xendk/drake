@@ -8,12 +8,12 @@
 /**
  * Situs testing class.
  */
-class doCase extends Drush_CommandTestCase {
+class DrakeCase extends Drush_CommandTestCase {
 
   public static function setUpBeforeClass() {
     parent::setUpBeforeClass();
     // Copy in the command file, so the sandbox can find it.
-    copy(dirname(dirname(__FILE__)) . '/do.drush.inc', getenv('HOME') . '/.drush/do.drush.inc');
+    copy(dirname(dirname(__FILE__)) . '/drake.drush.inc', getenv('HOME') . '/.drush/drake.drush.inc');
   }
 
   // public function setUp() {
@@ -58,16 +58,16 @@ class doCase extends Drush_CommandTestCase {
   function testRecursiveFail() {
     // Hack for outputting stuff: fwrite(STDOUT, "test\n");
 
-    $this->drush('do', array('recur1'), array('file' => dirname(__FILE__) . '/do.php'), NULL, NULL, self::EXIT_ERROR);
+    $this->drush('drake', array('recur1'), array('file' => dirname(__FILE__) . '/drakefile.php'), NULL, NULL, self::EXIT_ERROR);
   }
 
   function testMissingAction() {
-    $this->drush('do', array('actionless'), array('file' => dirname(__FILE__) . '/do.php'), NULL, NULL, self::EXIT_ERROR);
+    $this->drush('drake', array('actionless'), array('file' => dirname(__FILE__) . '/drakefile.php'), NULL, NULL, self::EXIT_ERROR);
   }
 
   function testBasicActions() {
-    $this->drush('do', array('task-with-working-action'), array('file' => dirname(__FILE__) . '/do.php'));
-    $this->drush('do', array('task-with-failing-action'), array('file' => dirname(__FILE__) . '/do.php'), NULL, NULL, self::EXIT_ERROR);
+    $this->drush('drake', array('task-with-working-action'), array('file' => dirname(__FILE__) . '/drakefile.php'));
+    $this->drush('drake', array('task-with-failing-action'), array('file' => dirname(__FILE__) . '/drakefile.php'), NULL, NULL, self::EXIT_ERROR);
   }
 
 }

@@ -8,8 +8,8 @@
 /**
  * Implements hook_drush_command().
  */
-function do_drush_command() {
-  $items['do'] = array(
+function drake_drush_command() {
+  $items['drake'] = array(
     'description' => 'Do something.',
     'arguments' => array(
       'what' => 'Stuff to do.',
@@ -27,13 +27,13 @@ function do_drush_command() {
 /**
  * Implements hook_drush_help().
  */
-function do_drush_help($section) {
+function drake_drush_help($section) {
   switch ($section) {
-    case 'meta:do:title':
+    case 'meta:drake:title':
       return dt('Do');
-    case 'meta:situs:summary':
+    case 'meta:drake:summary':
       return dt('Do stuff.');
-    case 'drush:do':
+    case 'drush:drake':
       return dt("Does stuff...");
   }
 }
@@ -41,12 +41,12 @@ function do_drush_help($section) {
 /**
  * Command callback.
  */
-function drush_do($what = '') {
+function drush_drake($what = '') {
   $files = array();
 
   // Use a do file in the current directory.
-  if (file_exists('do.php')) {
-    $files[] = 'do.php';
+  if (file_exists('drakefile.php')) {
+    $files[] = 'drakefile.php';
   }
 
   $file = drush_get_option('file', NULL);
@@ -58,7 +58,7 @@ function drush_do($what = '') {
   }
 
   if (empty($files)) {
-    return drush_set_error('NO_DO_FILE', dt('No do.php files found or specified'));
+    return drush_set_error('NO_DRAKEFILE_FILE', dt('No drakefile.php files found or specified'));
   }
   foreach ($files as $file) {
     // @todo investigate whether this is the most kosher way to include file.
@@ -66,8 +66,8 @@ function drush_do($what = '') {
   }
 
   // Add array key as name in sub-arrays..
-  _do_index_array($tasks, 'name');
-  _do_index_array($actions, 'name');
+  _drake_index_array($tasks, 'name');
+  _drake_index_array($actions, 'name');
 
   // @todo make this a separate command?
   if (drush_get_option('list', FALSE)) {
@@ -88,20 +88,20 @@ function drush_do($what = '') {
   }
 
   // Add in dependent tasks.
-  if (!($run_tasks = do_resolve_dependencies($start_task, $tasks))) {
+  if (!($run_tasks = drake_resolve_dependencies($start_task, $tasks))) {
     return FALSE;
   }
 
   // Check that we can run the given tasks.
   foreach ($run_tasks as $delta => $task) {
-    if (!_do_check_task($task, &$actions)) {
+    if (!_drake_check_task($task, &$actions)) {
       return FALSE;
     }
   }
 
   foreach ($run_tasks as $delta => $task) {
-    drush_log(_do_task_message($task), 'status');
-    if (_do_run_task($task, $actions) === FALSE) {
+    drush_log(_drake_task_message($task), 'status');
+    if (_drake_run_task($task, $actions) === FALSE) {
       return FALSE;
     }
   }
@@ -111,7 +111,7 @@ function drush_do($what = '') {
 /**
  * Return the message for the task.
  */
-function _do_task_message($task) {
+function _drake_task_message($task) {
   if (!empty($task['message'])) {
     return $task['message'];
   }
@@ -123,7 +123,7 @@ function _do_task_message($task) {
 /**
  * Check that a task can be run.
  */
-function _do_check_task($task, $actions) {
+function _drake_check_task($task, $actions) {
   if (!empty($task['action'])) {
     if (!isset($actions[$task['action']])) {
       return drush_set_error("UNKNOWN_ACTION", dt('Unknown action "@action".', array('@action' => $task['action'])));
@@ -135,13 +135,13 @@ function _do_check_task($task, $actions) {
 /**
  * Add the key of the array items as the given value in the sub-array.
  */
-function _do_index_array(&$array, $prop) {
+function _drake_index_array(&$array, $prop) {
   foreach ($array as $key => $item) {
     $array[$key][$prop] = $key;
   }
 }
 
-function _do_run_task($task, $actions) {
+function _drake_run_task($task, $actions) {
   if (isset($task['action'])) {
     $action = $actions[$task['action']];
     $function = $action['callback'];
@@ -154,19 +154,19 @@ function _do_run_task($task, $actions) {
 /**
  * Resolve task dependencies by doing a depth first search.
  */
-function do_resolve_dependencies($task, $tasks) {
+function drake_resolve_dependencies($task, $tasks) {
   $resolution = array();
   $seen = array();
-  if (!_do_visit($task, $resolution, $tasks, $seen, array())) {
+  if (!_drake_visit($task, $resolution, $tasks, $seen, array())) {
     return FALSE;
   }
   return $resolution;
 }
 
 /**
- * Helper for do_resolve_dependencies().
+ * Helper for drake_resolve_dependencies().
  */
-function _do_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
+function _drake_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
   if (!isset($seen[$task['name']])) {
     $seen[$task['name']] = TRUE;
     if (!empty($task['depends'])) {
@@ -180,7 +180,7 @@ function _do_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
         if (!isset($all_tasks[$dependency_name])) {
           return drush_set_error('UNKNOWN_TASK', dt('Unknown task @task', array('@task' => $dependency_name)));
         }
-        $res = _do_visit($all_tasks[$dependency_name], $resolution, $all_tasks, $seen, array_merge($stack, array($task['name'])));
+        $res = _drake_visit($all_tasks[$dependency_name], $resolution, $all_tasks, $seen, array_merge($stack, array($task['name'])));
         if (!$res) {
           return $res;
         }
