@@ -156,6 +156,7 @@ function drush_drake($target = '') {
     // will loose our drake command option (as it is an array).
     $backend_options = array(
       'method' => 'POST',
+      '#output-label' => $task['name'] . ': ',
     );
     $command_options = drush_redispatch_get_options();
     // $command_options['yes'] = TRUE;
