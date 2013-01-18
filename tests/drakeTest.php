@@ -14,6 +14,7 @@ class DrakeCase extends Drush_CommandTestCase {
     parent::setUpBeforeClass();
     // Copy in the command file, so the sandbox can find it.
     copy(dirname(dirname(__FILE__)) . '/drake.drush.inc', getenv('HOME') . '/.drush/drake.drush.inc');
+    copy(dirname(dirname(__FILE__)) . '/drake.actions.inc', getenv('HOME') . '/.drush/drake.actions.inc');
   }
 
   // public function setUp() {

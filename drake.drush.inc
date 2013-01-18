@@ -5,6 +5,8 @@
  * @todo
  */
 
+include_once 'drake.actions.inc';
+
 /**
  * Implements hook_drush_command().
  */
@@ -72,6 +74,9 @@ function drush_drake($target = '') {
   if (empty($files)) {
     return drush_set_error('NO_DRAKEFILE_FILE', dt('No drakefile.php files found or specified'));
   }
+
+  $actions = drake_standard_actions();
+
   foreach ($files as $file) {
     // @todo investigate whether this is the most kosher way to include file.
     include($file);
@@ -198,11 +203,18 @@ function _drake_index_array(&$array, $prop) {
   }
 }
 
+/**
+ * Runs a single task.
+ */
 function _drake_run_task($task, $actions) {
   if (isset($task['action'])) {
     $action = $actions[$task['action']];
     $function = $action['callback'];
+    $context = &drush_get_context('DRAKE_RUN');
+    $context['action'] = $action;
+    $context['task'] = $task;
     if ($function($task) === FALSE) {
+      $context = array();
       return drush_set_error('TASK_FAILED', dt('Task "@name" failed.', array('@name' => $task['name'])));
     }
   }
