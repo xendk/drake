@@ -42,12 +42,28 @@ function do_drush_help($section) {
  * Command callback.
  */
 function drush_do($what = '') {
-  $file = drush_get_option('file', NULL);
-  if (empty($file)) {
-    return drush_set_error('File scanning not implemented yet.');
+  $files = array();
+
+  // Use a do file in the current directory.
+  if (file_exists('do.php')) {
+    $files[] = 'do.php';
   }
-  // @todo investigate whether this is the most kosher way to include file.
-  include($file);
+
+  $file = drush_get_option('file', NULL);
+  if (!empty($file)) {
+    if (!file_exists($file)) {
+      return drush_set_error('MISSING_FILE', dt('File @file not found.', array('@file' => $file)));
+    }
+    $files[] = $file;
+  }
+
+  if (empty($files)) {
+    return drush_set_error('NO_DO_FILE', dt('No do.php files found or specified'));
+  }
+  foreach ($files as $file) {
+    // @todo investigate whether this is the most kosher way to include file.
+    include($file);
+  }
 
   // Add array key as name in sub-arrays..
   _do_index_array($tasks, 'name');
