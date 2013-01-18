@@ -19,6 +19,7 @@ function drake_drush_command() {
     'options' => array(
       'file' => 'Use specified file.',
       'list' => 'List available tasks.',
+      'list-files' => 'List used drakefiles.',
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
@@ -56,23 +57,46 @@ function drake_drush_help($section) {
  * Command callback.
  */
 function drush_drake($target = '') {
+  // Drake files to load.
   $files = array();
-
-  // Use a do file in the current directory.
-  if (file_exists('drakefile.php')) {
-    $files[] = 'drakefile.php';
-  }
 
   $file = drush_get_option('file', NULL);
   if (!empty($file)) {
+    // A file was specified, use that.
     if (!file_exists($file)) {
       return drush_set_error('MISSING_FILE', dt('File @file not found.', array('@file' => $file)));
     }
-    $files[] = $file;
+    // Override files.
+    $files = array($file);
+  }
+  else {
+    // Else look around.
+    // Add sites/all/drush if we have a boostrapped site.
+    $drupal_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT');
+    if (!empty($drupal_root)) {
+      $site_all = drush_get_context('DRUSH_SELECTED_DRUPAL_SITES_ALL_DRUSH') . '/drakefile.php';
+      if (file_exists($site_all)) {
+        $files[] = $site_all;
+      }
+    }
+
+    // Use a drakefile file in the current directory.
+    if (file_exists('drakefile.php')) {
+      $files[] = 'drakefile.php';
+    }
   }
 
   if (empty($files)) {
     return drush_set_error('NO_DRAKEFILE_FILE', dt('No drakefile.php files found or specified'));
+  }
+
+  // @todo make this a separate command?
+  if (drush_get_option('list-files', FALSE)) {
+    drush_log(dt('Loaded drakefiles::'), 'status');
+    foreach ($files as $file) {
+      drush_log($file, 'status');
+    }
+    return;
   }
 
   $actions = drake_standard_actions();
