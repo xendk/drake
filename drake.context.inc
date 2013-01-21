@@ -35,10 +35,10 @@ class DrakeContext implements ArrayAccess {
   }
 
   function resolve($array) {
-    array_walk_recursive($array, array($this, 'resolve_vaule'));
+    array_walk_recursive($array, array($this, 'resolve_value'));
   }
 
-  function resolve_vaule(&$value) {
+  function resolve_value(&$value) {
     if ($value instanceof DrakeContextPlaceholder) {
       $value = $this[$value->name()];
     }
