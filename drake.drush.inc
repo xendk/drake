@@ -355,7 +355,7 @@ function _drake_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
     $seen[$task['name']] = TRUE;
     $context = $task['#context'];
     if (isset($task['context'])) {
-      $context = new Context($context);
+      $context = new DrakeContext($context);
       foreach ($task['context'] as $name => $value) {
         $context[$name] = $value;
       }
