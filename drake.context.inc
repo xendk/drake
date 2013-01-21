@@ -22,7 +22,7 @@ class DrakeContextPlaceholder {
   }
 
   public function name() {
-    return $name;
+    return $this->name;
   }
 }
 
