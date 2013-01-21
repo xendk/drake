@@ -5,6 +5,7 @@
  * @todo
  */
 
+include_once 'drake.context.inc';
 include_once 'drake.actions.inc';
 
 /**
@@ -99,11 +100,20 @@ function drush_drake($target = '') {
     return;
   }
 
+  $tasks = array();
   $actions = drake_standard_actions();
 
+  $global_context = new DrakeContext();
   foreach ($files as $file) {
     // @todo investigate whether this is the most kosher way to include file.
-    include($file);
+    $context = new DrakeContext($global_context);
+    $res = _drake_load_file($file, $context);
+    if (!empty($res['tasks'])) {
+      $tasks = array_merge($tasks, $res['tasks']);
+    }
+    if (!empty($res['actions'])) {
+      $actions = array_merge($actions, $res['actions']);
+    }
   }
 
   // Add array key as name in sub-arrays..
@@ -149,7 +159,7 @@ function drush_drake($target = '') {
       return FALSE;
     }
   }
-
+  dlm($run_tasks);
   foreach ($run_tasks as $delta => $task) {
     drush_log(_drake_task_message($task), 'status');
     // We need drush_invoke_process to use post for redispatching, as using get
@@ -160,6 +170,7 @@ function drush_drake($target = '') {
     );
     $command_options = drush_redispatch_get_options();
     // $command_options['yes'] = TRUE;
+    $task['#context']->resolve($task);
     $command_options['drake'] = array(
       'task' => $task,
       'files' => $files,
@@ -199,6 +210,27 @@ function drush_drake_process($target) {
     // Else assume that the task set the message.
     return FALSE;
   }
+}
+
+/**
+ * Load a drakefile.
+ */
+function _drake_load_file($file, $context) {
+  include $file;
+  $return = array();
+  if (!empty($tasks)) {
+    foreach ($tasks as &$task) {
+      $task['#context'] = $context;
+    }
+    $return['tasks'] = $tasks;
+  }
+  if (!empty($actions)) {
+    foreach ($actions as &$action) {
+      $action['#context'] = $context;
+    }
+    $return['actions'] = $actions;
+  }
+  return $return;
 }
 
 /**
@@ -321,6 +353,13 @@ function drake_resolve_dependencies($task, $tasks) {
 function _drake_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
   if (!isset($seen[$task['name']])) {
     $seen[$task['name']] = TRUE;
+    $context = $task['#context'];
+    if (isset($task['context'])) {
+      $context = new Context($context);
+      foreach ($task['context'] as $name => $value) {
+        $context[$name] = $value;
+      }
+    }
     if (!empty($task['depends'])) {
       foreach ($task['depends'] as $dependency_name) {
         // Circular detection.
@@ -332,7 +371,10 @@ function _drake_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
         if (!isset($all_tasks[$dependency_name])) {
           return drush_set_error('UNKNOWN_TASK', dt('Unknown task @task', array('@task' => $dependency_name)));
         }
-        $res = _drake_visit($all_tasks[$dependency_name], $resolution, $all_tasks, $seen, array_merge($stack, array($task['name'])));
+        // Let context follow dependencies.
+        $dependency = $all_tasks[$dependency_name];
+        $dependency['#context'] = $context;
+        $res = _drake_visit($dependency, $resolution, $all_tasks, $seen, array_merge($stack, array($task['name'])));
         if (!$res) {
           return $res;
         }
