@@ -36,6 +36,24 @@ $tasks['shell-action'] = array(
   'command' => 'echo "Slartibartfast"',
 );
 
+$tasks['bad-arg-shell-action'] = array(
+  'action' => 'shell',
+  'cmd' => 'echo "Slartibartfast"',
+);
+
+$tasks['multiple-shell-action-simple'] = array(
+  'action' => 'shell',
+  'commands' => array('echo "Slartibartfast"', 'echo "Deriparamaxx"'),
+);
+
+$tasks['multiple-shell-action-params'] = array(
+  'action' => 'shell',
+  'commands' => array(
+    'echo "Slartibartfast"' => array(),
+    'echo "Deriparamaxx"' => array(),
+  ),
+);
+
 $tasks['failing-shell-action'] = array(
   'action' => 'shell',
   // The Unix false command which returns a non-zero exit code.

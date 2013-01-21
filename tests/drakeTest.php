@@ -77,6 +77,22 @@ class DrakeCase extends Drush_CommandTestCase {
     // Check for shell command output.
     $this->assertRegExp('/Slartibartfast/', $this->getOutput());
 
+    // Missing params should fail the command.
+    $this->drush('drake 2>&1', array('bad-arg-shell-action'), $this->options, NULL, NULL, self::EXIT_ERROR);
+    $this->assertRegExp('/Action "shell" failed: Required param\(s\) not supplied: "command"./', $this->getOutput());
+
+    // Check that an simple array of commands work.
+    $this->drush('drake', array('multiple-shell-action-simple'), $this->options);
+    // Check for shell command output.
+    $this->assertRegExp('/Slartibartfast/', $this->getOutput());
+    $this->assertRegExp('/Deriparamaxx/', $this->getOutput());
+
+    // Test that an array of commands with additional params work.
+    $this->drush('drake', array('multiple-shell-action-params'), $this->options);
+    // Check for shell command output.
+    $this->assertRegExp('/Slartibartfast/', $this->getOutput());
+    $this->assertRegExp('/Deriparamaxx/', $this->getOutput());
+
     // Failing commands should fail the whole process.
     $this->drush('drake 2>&1', array('failing-shell-action'), $this->options, NULL, NULL, self::EXIT_ERROR);
     $this->assertRegExp('/Action "shell" failed: command failed./', $this->getOutput());

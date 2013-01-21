@@ -9,9 +9,34 @@ function drake_standard_actions() {
   return array(
     'shell' => array(
       'callback' => 'drake_action_shell',
+      'multiple' => 'command',
+      'parameters' => array(
+        'command' => 'Shell command to run.',
+      ),
     ),
     'drush' => array(
       'callback' => 'drake_action_drush',
+      'multiple' => 'command',
+      'parameters' => array(
+        'command' => array(
+          'description' => 'The drush command to run.',
+        ),
+        'args' => array(
+          'description' => 'Arguments to Drush command. Keyed values are switches, numerically keyed values are arguments.',
+          'default' => array(),
+        ),
+        'target' => array(
+          'description' => 'Site-alias to run the command on (default: @self)',
+          'default' => '@self',
+        ),
+      ),
+      'examples' => array(
+        'sql-sync' => array(
+          'action' => 'drush',
+          'command' => 'sql-sync',
+          'args' => array('@prod', '@dev', 'no-cache' => TRUE),
+        ),
+      ),
     ),
   );
 }
@@ -28,10 +53,6 @@ function drake_action_error($message) {
  * Execute a shell command.
  */
 function drake_action_shell($context) {
-  if (empty($context['command'])) {
-    return drake_action_error(dt('no command specified.'));
-  }
-
   if (!drush_shell_exec_interactive($context['command'])) {
     return drake_action_error(dt('command failed.'));
   }
@@ -43,13 +64,16 @@ function drake_action_shell($context) {
  * Execute a drush command.
  */
 function drake_action_drush($context) {
-  if (empty($context['command'])) {
-    return drake_action_error(dt('no command specified.'));
+  $args = $options = array();
+  foreach ($context['args'] as $key => $arg) {
+    if (is_int($key)) {
+      $args[] = $arg;
+    }
+    else {
+      $options[$key] = $arg;
+    }
   }
-
-  $args = !empty($context['args']) ? $context['args'] : array();
-  $options = !empty($context['options']) ? $context['options'] : array();
-  $res = drush_invoke_process('@self', $context['command'], $args, $options, TRUE);
+  $res = drush_invoke_process($context['target'], $context['command'], $args, $options, TRUE);
 
   if (!$res || $res['error_status'] != 0) {
     return drake_action_error(dt('command failed.'));

@@ -144,8 +144,8 @@ function drush_drake($target = '') {
   }
 
   // Check that we can run the given tasks.
-  foreach ($run_tasks as $delta => $task) {
-    if (!_drake_check_task($task, &$actions)) {
+  foreach ($run_tasks as $delta => &$task) {
+    if (!_drake_check_task($task, $actions)) {
       return FALSE;
     }
   }
@@ -161,13 +161,13 @@ function drush_drake($target = '') {
     $command_options = drush_redispatch_get_options();
     // $command_options['yes'] = TRUE;
     $command_options['drake'] = array(
-      'tasks' => $tasks,
-      'actions' => $actions,
+      'task' => $task,
       'files' => $files,
     );
     $result = drush_invoke_process('@self', 'drake-process', array($task['name']), $command_options, $backend_options);
     if ($result['error_status'] !== 0) {
-      return drush_set_error('TASK_FAILED', dt('Task "@task" failed, aborting.', array('@task' => $task['name'])));
+      // We assume that _drake_run_task already output a message.
+      return FALSE;
     }
   }
 }
@@ -178,30 +178,26 @@ function drush_drake($target = '') {
 function drush_drake_process($target) {
   $drake = drush_get_option('drake', NULL);
 
-  if (empty($drake['tasks']) || empty($drake['actions'])) {
-    return drush_set_error('BAD_ARGUMENTS', dt('Bad arguments for drake-process.'));
+  if (empty($drake['task'])) {
+    return drush_set_error('NO_TASK', dt('Task not specified for drake-process.'));
   }
 
-  if (isset($drake['tasks'][$target])) {
-    if (!empty($drake['files'])) {
-      // Load the drakefiles to define the functions they contain.
-      foreach ($drake['files'] as $file) {
-        // @todo investigate whether this is the most kosher way to include file.
-        include($file);
-      }
-    }
-    if (_drake_run_task($drake['tasks'][$target], $drake['actions']) === FALSE) {
-      // If error code isn't set, set a generic error message to ensure that our
-      // return code is failure..
-      if (drush_get_error() == DRUSH_SUCCESS) {
-        return drush_set_error('UNKNOWN_ERROR', dt('Task failed with an unknown error.'));
-      }
-      // Else assume that the task set the message.
-      return FALSE;
+
+  if (!empty($drake['files'])) {
+    // Load the drakefiles to define the functions they contain.
+    foreach ($drake['files'] as $file) {
+      // @todo investigate whether this is the most kosher way to include file.
+      include($file);
     }
   }
-  else {
-    return drush_set_error('UNKNOWN_TASK', dt('Unknown task @task', array('@task' => $target)));
+  if (_drake_run_task($drake['task']) === FALSE) {
+    // If error code isn't set, set a generic error message to ensure that our
+    // return code is failure..
+    if (drush_get_error() == DRUSH_SUCCESS) {
+      return drush_set_error('UNKNOWN_ERROR', dt('Task failed with an unknown error.'));
+    }
+    // Else assume that the task set the message.
+    return FALSE;
   }
 }
 
@@ -220,15 +216,62 @@ function _drake_task_message($task) {
 /**
  * Check that a task can be run.
  */
-function _drake_check_task($task, $actions) {
+function _drake_check_task(&$task, &$actions) {
   if (!empty($task['action'])) {
     if (!isset($actions[$task['action']])) {
       return drush_set_error("UNKNOWN_ACTION", dt('Unknown action "@action".', array('@action' => $task['action'])));
     }
-    elseif (empty($actions[$task['action']]['callback']) ||
-      !function_exists($actions[$task['action']]['callback'])) {
-      return drush_set_error("UNKNOWN_ACTION_CALLBACK", dt('Callback for action "@action" does not exist.', array('@action' => $task['action'])));
+
+    $action = $actions[$task['action']];
+    $task['action'] = $action;
+
+    if (empty($action['callback']) ||
+      !function_exists($action['callback'])) {
+      return drush_set_error("UNKNOWN_ACTION_CALLBACK", dt('Callback for action "@action" does not exist.', array('@action' => $action['name'])));
     }
+
+    $action += array(
+      'multiple' => '',
+      'parameters' => array(),
+    );
+    // Compile default parameters.
+    $action_defaults = array();
+    foreach ($action['parameters'] as $param_name => $param_settings) {
+      if (!empty($param_settings['default'])) {
+        $action_defaults[$param_name] = $param_settings['default'];
+      }
+    }
+    // Check the action parameters and add in the action(s) on the task.
+    $muliple_parm = $action['multiple'];
+    if ($muliple_parm && isset($task[$muliple_parm . 's'])) {
+      if (!empty($task[$muliple_parm])) {
+        return drush_set_error('AMBIGUOUS_PARAM', dt('Action "@action" failed: Both "@singular_parm" and "@plural_parm" cannot be specified.', array('@action' => $action['name'], '@singular_parm' => $muliple_parm, '@plural_parm' => $muliple_parm . 's')));
+      }
+      $task_actions = array();
+      // Explode the multiple parameter to multiple actions.
+      foreach ($task[$muliple_parm . 's'] as $key => $params) {
+        // If the key is int, use the value as command. Allows for using simple
+        // array shorthand when no additional parameters is needed.
+        if (is_int($key)) {
+          $key = $params;
+          $params = array();
+        }
+        $task_actions[] = array($muliple_parm => $key) + $params + $task;
+      }
+    }
+    else {
+      $task_actions = array($task);
+    }
+
+    // Check that required parameters is present.
+    foreach ($task_actions as $task_action) {
+      $diff = array_diff(array_keys($action['parameters']), array_keys($task_action));
+      if (!empty($diff)) {
+        return drush_set_error('MISSING_PARAM', dt('Action "@action" failed: Required param(s) not supplied: "@params".', array('@action' => $action['name'], '@params' => join(', ', $diff))));
+      }
+    }
+
+    $task['actions'] = $task_actions;
   }
   return TRUE;
 }
@@ -245,16 +288,17 @@ function _drake_index_array(&$array, $prop) {
 /**
  * Runs a single task.
  */
-function _drake_run_task($task, $actions) {
-  if (isset($task['action'])) {
-    $action = $actions[$task['action']];
-    $function = $action['callback'];
-    $context = &drush_get_context('DRAKE_RUN');
-    $context['action'] = $action;
-    $context['task'] = $task;
-    if ($function($task) === FALSE) {
-      $context = array();
-      return drush_set_error('TASK_FAILED', dt('Task "@name" failed.', array('@name' => $task['name'])));
+function _drake_run_task($task) {
+  if (isset($task['actions'])) {
+    foreach ($task['actions'] as $run_action) {
+      $function = $run_action['action']['callback'];
+      $context = &drush_get_context('DRAKE_RUN');
+      $context['action'] = $run_action['action'];
+      $context['task'] = $task;
+      if ($function($run_action) === FALSE) {
+        $context = array();
+        return drush_set_error('TASK_FAILED', dt('Task "@task" failed, aborting.', array('@task' => $task['name'])));
+      }
     }
   }
 }
