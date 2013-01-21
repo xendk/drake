@@ -159,7 +159,7 @@ function drush_drake($target = '') {
       return FALSE;
     }
   }
-  dlm($run_tasks);
+
   foreach ($run_tasks as $delta => $task) {
     drush_log(_drake_task_message($task), 'status');
     // We need drush_invoke_process to use post for redispatching, as using get
@@ -269,7 +269,7 @@ function _drake_check_task(&$task, &$actions) {
     // Compile default parameters.
     $action_defaults = array();
     foreach ($action['parameters'] as $param_name => $param_settings) {
-      if (!empty($param_settings['default'])) {
+      if (is_array($param_settings) && (array_key_exists('default', $param_settings))) {
         $action_defaults[$param_name] = $param_settings['default'];
       }
     }
@@ -288,11 +288,11 @@ function _drake_check_task(&$task, &$actions) {
           $key = $params;
           $params = array();
         }
-        $task_actions[] = array($muliple_parm => $key) + $params + $task;
+        $task_actions[] = array($muliple_parm => $key) + $params + $task + $action_defaults;
       }
     }
     else {
-      $task_actions = array($task);
+      $task_actions = array($task + $action_defaults);
     }
 
     // Check that required parameters is present.
