@@ -154,13 +154,13 @@ function drush_drake($target = '') {
   }
 
   // Check that we can run the given tasks.
-  foreach ($run_tasks as $delta => &$task) {
+  foreach ($run_tasks as &$task) {
     if (!_drake_check_task($task, $actions)) {
       return FALSE;
     }
   }
 
-  foreach ($run_tasks as $delta => $task) {
+  foreach ($run_tasks as $task) {
     drush_log(_drake_task_message($task), 'status');
     // We need drush_invoke_process to use post for redispatching, as using get
     // will loose our drake command option (as it is an array).
@@ -350,8 +350,9 @@ function drake_resolve_dependencies($task, $tasks) {
  * Helper for drake_resolve_dependencies().
  */
 function _drake_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
-  if (!isset($seen[$task['name']])) {
-    $seen[$task['name']] = TRUE;
+  $seen_id = $task['name'] . $task['#context']->md5();
+  if (!isset($seen[$seen_id])) {
+    $seen[$seen_id] = TRUE;
     $context = $task['#context'];
     if (isset($task['context'])) {
       $context = new DrakeContext($context);
@@ -379,7 +380,7 @@ function _drake_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
         }
       }
     }
-    $resolution[$task['name']] = $task;
+    $resolution[] = $task;
   }
   return TRUE;
 }

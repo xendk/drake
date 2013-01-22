@@ -104,6 +104,11 @@ class DrakeCase extends Drush_CommandTestCase {
     // Check for shell command output.
     $this->assertRegExp('/Arthur Dent/', $this->getOutput());
 
+    $this->drush('drake', array('multiple-contexts'), $this->options);
+    // Check for shell command output.
+    $this->assertRegExp('/Arthur Dent/', $this->getOutput());
+    $this->assertRegExp('/Ford Prefect/', $this->getOutput());
+
   }
 
 }

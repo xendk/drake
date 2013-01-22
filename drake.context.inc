@@ -44,6 +44,18 @@ class DrakeContext implements ArrayAccess {
     }
   }
 
+  function md5() {
+    return md5(serialize($this->toArray()));
+  }
+
+  function toArray() {
+    $return = array();
+    if ($this->parent) {
+      $return = $this->parent->toArray();
+    }
+    return array_merge($return, $this->values);
+  }
+
   /**
    * Implements ArrayAccess::offsetExists().
    */

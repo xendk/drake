@@ -73,6 +73,16 @@ $tasks['context-shell-action'] = array(
   ),
 );
 
+$tasks['context-shell-action2'] = array(
+  'depends' => 'param-echo',
+  'context' => array(
+    'to_echo' => 'Ford Prefect',
+  ),
+);
+
+$tasks['multiple-contexts'] = array(
+  'depends' => array('context-shell-action', 'context-shell-action2'),
+);
 
 $tasks['string-dependency'] = array(
   'depends' => 'shell-action',
