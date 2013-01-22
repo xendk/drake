@@ -193,7 +193,6 @@ function drush_drake_process($target) {
     return drush_set_error('NO_TASK', dt('Task not specified for drake-process.'));
   }
 
-
   if (!empty($drake['files'])) {
     // Load the drakefiles to define the functions they contain.
     foreach ($drake['files'] as $file) {

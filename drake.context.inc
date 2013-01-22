@@ -34,7 +34,7 @@ class DrakeContext implements ArrayAccess {
     $this->parent = $parent;
   }
 
-  function resolve($array) {
+  function resolve(&$array) {
     array_walk_recursive($array, array($this, 'resolve_value'));
   }
 

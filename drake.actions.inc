@@ -12,6 +12,10 @@ function drake_standard_actions() {
       'multiple' => 'command',
       'parameters' => array(
         'command' => 'Shell command to run.',
+        'args' => array(
+          'description' => 'Arguments to command (optional).',
+          'default' => array(),
+        ),
       ),
     ),
     'drush' => array(
@@ -53,7 +57,13 @@ function drake_action_error($message) {
  * Execute a shell command.
  */
 function drake_action_shell($context) {
-  if (!drush_shell_exec_interactive($context['command'])) {
+  $command = array_merge(array($context['command']), $context['args']);
+  for ($x = 1; $x < sizeof($command); $x++) {
+    $command[$x] = drush_escapeshellarg($command[$x]);
+  }
+  $command = join(' ', $command);
+
+  if (!drush_shell_exec_interactive($command)) {
     return drake_action_error(dt('command failed.'));
   }
 }

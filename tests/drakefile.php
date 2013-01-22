@@ -60,6 +60,20 @@ $tasks['failing-shell-action'] = array(
   'command' => 'false',
 );
 
+$tasks['param-echo'] = array(
+  'action' => 'shell',
+  'command' => 'echo',
+  'args' => array(context('to_echo')),
+);
+
+$tasks['context-shell-action'] = array(
+  'depends' => 'param-echo',
+  'context' => array(
+    'to_echo' => 'Arthur Dent',
+  ),
+);
+
+
 $tasks['string-dependency'] = array(
   'depends' => 'shell-action',
 );

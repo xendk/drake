@@ -97,6 +97,13 @@ class DrakeCase extends Drush_CommandTestCase {
     // Failing commands should fail the whole process.
     $this->drush('drake 2>&1', array('failing-shell-action'), $this->options, NULL, NULL, self::EXIT_ERROR);
     $this->assertRegExp('/Action "shell" failed: command failed./', $this->getOutput());
+  }
+
+  function testContextActions() {
+    $this->drush('drake', array('context-shell-action'), $this->options);
+    // Check for shell command output.
+    $this->assertRegExp('/Arthur Dent/', $this->getOutput());
 
   }
+
 }
