@@ -1,5 +1,9 @@
 <?php
 
+$context = array(
+  'to_echo' => 'Marvin',
+);
+
 $tasks['recur1'] = array(
   'depends' => array('recur2'),
 );
@@ -78,6 +82,10 @@ $tasks['context-shell-action2'] = array(
   'context' => array(
     'to_echo' => 'Ford Prefect',
   ),
+);
+
+$tasks['global-context-shell-action'] = array(
+  'depends' => 'param-echo',
 );
 
 $tasks['multiple-contexts'] = array(

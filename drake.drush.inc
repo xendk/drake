@@ -159,6 +159,8 @@ function drush_drake($target = '') {
       return FALSE;
     }
   }
+  // Unset reference, else the following foreach loop will munge the last task.
+  unset($task);
 
   foreach ($run_tasks as $task) {
     drush_log(_drake_task_message($task), 'status');
@@ -214,20 +216,25 @@ function drush_drake_process($target) {
 /**
  * Load a drakefile.
  */
-function _drake_load_file($file, $context) {
-  include $file;
+function _drake_load_file($_drake_file, $_drake_context) {
+  include $_drake_file;
   $return = array();
   if (!empty($tasks)) {
     foreach ($tasks as &$task) {
-      $task['#context'] = $context;
+      $task['#context'] = $_drake_context;
     }
     $return['tasks'] = $tasks;
   }
   if (!empty($actions)) {
     foreach ($actions as &$action) {
-      $action['#context'] = $context;
+      $action['#context'] = $_drake_context;
     }
     $return['actions'] = $actions;
+  }
+  if (!empty($context)) {
+    foreach($context as $key => $value) {
+      $_drake_context[$key] = $value;
+    }
   }
   return $return;
 }
