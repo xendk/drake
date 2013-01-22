@@ -165,7 +165,8 @@ function drush_drake($target = '') {
   unset($task);
 
   foreach ($run_tasks as $task) {
-    drush_log("\n" . _drake_task_message($task), 'status');
+    drush_log(_drake_task_message($task), 'status');
+
     // We need drush_invoke_process to use post for redispatching, as using get
     // will loose our drake command option (as it is an array).
     $backend_options = array(
@@ -184,8 +185,8 @@ function drush_drake($target = '') {
       // We assume that _drake_run_task already output a message.
       return FALSE;
     }
+    drush_log("Done\n", 'ok');
   }
-  drush_log(dt("All done."), 'status');
 }
 
 /**
