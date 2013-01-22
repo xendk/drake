@@ -56,6 +56,8 @@ function drake_drush_help($section) {
 
 /**
  * Command callback.
+ *
+ * Executes the main drake command.
  */
 function drush_drake($target = '') {
   // Drake files to load.
@@ -155,7 +157,7 @@ function drush_drake($target = '') {
 
   // Check that we can run the given tasks.
   foreach ($run_tasks as &$task) {
-    if (!_drake_check_task($task, $actions)) {
+    if (!_drake_prepare_task($task, $actions)) {
       return FALSE;
     }
   }
@@ -214,7 +216,9 @@ function drush_drake_process($target) {
 }
 
 /**
- * Load a drakefile.
+ * Load a drakefile, adding context.
+ *
+ * Adds context objects to tasks and actions and saves file scope context.
  */
 function _drake_load_file($_drake_file, $_drake_context) {
   include $_drake_file;
@@ -252,9 +256,12 @@ function _drake_task_message($task) {
 }
 
 /**
- * Check that a task can be run.
+ * Check and prepare a task.
+ *
+ * Ensures that actions are properly configured, handles multiple actions and
+ * action parameters.
  */
-function _drake_check_task(&$task, &$actions) {
+function _drake_prepare_task(&$task, &$actions) {
   if (!empty($task['action'])) {
     if (!isset($actions[$task['action']])) {
       return drush_set_error("UNKNOWN_ACTION", dt('Unknown action "@action".', array('@action' => $task['action'])));

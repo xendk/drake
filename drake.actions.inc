@@ -5,6 +5,9 @@
  * Standard actions for Drake.
  */
 
+/**
+ * Returns the build-in standard actions.
+ */
 function drake_standard_actions() {
   return array(
     'shell' => array(
@@ -45,6 +48,15 @@ function drake_standard_actions() {
   );
 }
 
+/**
+ * Trigger an error in actions.
+ *
+ * Actions should use this instead of drush_set_error when encountering an
+ * unrecoverable error.
+ *
+ * It provides context to the error message about which action failed, and
+ * ensures * a common format to error messages.
+ */
 function drake_action_error($message) {
   $context = &drush_get_context('DRAKE_RUN');
   $message = dt('Action "@action" failed: ', array('@action' => $context['action']['name'])) . $message;
