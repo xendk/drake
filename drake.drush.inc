@@ -302,7 +302,7 @@ function _drake_check_task(&$task, &$actions) {
       }
     }
 
-    $task['actions'] = $task_actions;
+    $task['#actions'] = $task_actions;
   }
   return TRUE;
 }
@@ -320,8 +320,8 @@ function _drake_index_array(&$array, $prop) {
  * Runs a single task.
  */
 function _drake_run_task($task) {
-  if (isset($task['actions'])) {
-    foreach ($task['actions'] as $run_action) {
+  if (isset($task['#actions'])) {
+    foreach ($task['#actions'] as $run_action) {
       $function = $run_action['action']['callback'];
       $context = &drush_get_context('DRAKE_RUN');
       $context['action'] = $run_action['action'];
