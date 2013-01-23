@@ -164,8 +164,10 @@ function drush_drake($target = '') {
   // Unset reference, else the following foreach loop will munge the last task.
   unset($task);
 
+  $total_tasks = sizeof($run_tasks);
+  $task_num = 1;
   foreach ($run_tasks as $task) {
-    drush_log(_drake_task_message($task), 'status');
+    drush_log(_drake_task_message($task) . ' [' . $task_num++ . '/' . $total_tasks . ']', 'status');
 
     // We need drush_invoke_process to use post for redispatching, as using get
     // will loose our drake command option (as it is an array).
@@ -180,6 +182,7 @@ function drush_drake($target = '') {
       'task' => $task,
       'files' => $files,
     );
+    // @todo Why no colors?
     $result = drush_invoke_process('@self', 'drake-process', array($task['name']), $command_options, $backend_options);
     if ($result['error_status'] !== 0) {
       // We assume that _drake_run_task already output a message.
@@ -253,7 +256,7 @@ function _drake_task_message($task) {
     return $task['message'];
   }
   else {
-    return dt('Doing "@task_name" task.', array('@task_name' => $task['name']));
+    return dt('Doing "@task_name" task', array('@task_name' => $task['name']));
   }
 }
 
