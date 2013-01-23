@@ -212,7 +212,6 @@ function drush_drake($target = '') {
         'task' => $task,
         'files' => $files,
       );
-      // @todo Why no colors?
       $result = drush_invoke_process('@self', 'drake-process', array($task['name']), $command_options, $backend_options);
       if ($result['error_status'] !== 0) {
         // We assume that _drake_run_task already output a message.
