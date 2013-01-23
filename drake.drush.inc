@@ -96,9 +96,9 @@ function drush_drake($target = '') {
 
   // @todo make this a separate command?
   if (drush_get_option('show-files', FALSE)) {
-    drush_log(dt('Loaded drakefiles::'), 'status');
+    drush_print(dt('Loaded drakefiles:'));
     foreach ($files as $file) {
-      drush_log($file, 'status');
+      drush_print($file);
     }
     return;
   }
@@ -137,8 +137,8 @@ function drush_drake($target = '') {
 
   // @todo make this a separate command?
   if (drush_get_option('show-tasks', FALSE)) {
-    drush_log(dt('Available tasks:'), 'status');
-    drush_log(join(', ', array_keys($tasks)), 'status');
+    drush_print(dt('Available tasks:'));
+    drush_print(join(', ', array_keys($tasks)));
     return;
   }
 
