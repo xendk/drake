@@ -433,7 +433,7 @@ function _drake_visit(&$task, &$resolution, &$all_tasks, &$seen, $stack) {
         }
         // Let context follow dependencies.
         $dependency = $all_tasks[$dependency_name];
-        $dependency['#context'] = $context;
+        $dependency['#context'] = new DrakeContext(array($dependency['#context'], $context));
         $res = _drake_visit($dependency, $resolution, $all_tasks, $seen, array_merge($stack, array($task['name'])));
         if (!$res) {
           return $res;

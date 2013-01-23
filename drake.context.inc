@@ -50,7 +50,7 @@ class DrakeContextException extends Exception {}
  * context, which is asked if the current context doesn't define a variable.
  */
 class DrakeContext implements ArrayAccess {
-  protected $parent;
+  protected $parents;
   protected $values = array();
 
   /**
@@ -59,8 +59,11 @@ class DrakeContext implements ArrayAccess {
    * @param DrakeContext $parent
    *   Parent context.
    */
-  public function __construct(DrakeContext $parent = NULL) {
-    $this->parent = $parent;
+  public function __construct($parents = array()) {
+    if (!is_array($parents)) {
+      $parents = array($parents);
+    }
+    $this->parents = $parents;
   }
 
   /**
@@ -105,8 +108,8 @@ class DrakeContext implements ArrayAccess {
    */
   function toArray() {
     $return = array();
-    if ($this->parent) {
-      $return = $this->parent->toArray();
+    foreach ($this->parents as $parent) {
+      $return = array_merge($return, $parent->toArray());
     }
     return array_merge($return, $this->values);
   }
@@ -118,8 +121,12 @@ class DrakeContext implements ArrayAccess {
     if (isset($this->values[$offset]) || array_key_exists($offset, $this->values)) {
       return TRUE;
     }
-    elseif ($this->parent) {
-      return $this->parent->offsetExists($offset);
+    elseif (!empty($this->parents)) {
+      foreach ($this->parents as $parent) {
+        if ($parent->offsetExists($offset)) {
+          return TRUE;
+        }
+      }
     }
     return FALSE;
   }
@@ -132,14 +139,20 @@ class DrakeContext implements ArrayAccess {
       return $this->values[$offset];
     }
     else {
-      if ($this->parent) {
-        return $this->parent[$offset];
-      }
-      else {
-        // @todo Dedicated exception, or something else?
-        throw new DrakeContextException('No such context "' . $offset . '"');
+      if (!empty($this->parents)) {
+        // Check backwards as latter values takes priority.
+        foreach (array_reverse($this->parents) as $parent) {
+          try {
+            return $parent[$offset];
+          }
+          catch (DrakeContextException $e) {
+            // Do nothing, try the next parent.
+          }
+        }
       }
     }
+    // Couldn't find a value, throw exception.
+    throw new DrakeContextException('No such context "' . $offset . '"');
   }
 
   /**
