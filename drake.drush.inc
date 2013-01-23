@@ -178,7 +178,7 @@ function drush_drake($target = '') {
   unset($task);
 
   if (drush_get_option('show-context', FALSE)) {
-    $context = (isset($start_task['context']) ? $start_task['context'] : array()) + $start_task['#context']->toArray();
+    $context = $start_task['#context']->toArray();
     if (!empty($context)) {
       drush_print(dt('Context for the @task "task":', array('@task' => $start_task['name'])));
       $rows = array(array('Name', 'Value'));
@@ -395,7 +395,7 @@ function _drake_run_task($task) {
 /**
  * Resolve task dependencies by doing a depth first search.
  */
-function drake_resolve_dependencies($task, $tasks) {
+function drake_resolve_dependencies(&$task, &$tasks) {
   $resolution = array();
   $seen = array();
   if (!_drake_visit($task, $resolution, $tasks, $seen, array())) {
@@ -407,7 +407,7 @@ function drake_resolve_dependencies($task, $tasks) {
 /**
  * Helper for drake_resolve_dependencies().
  */
-function _drake_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
+function _drake_visit(&$task, &$resolution, &$all_tasks, &$seen, $stack) {
   $seen_id = $task['name'] . $task['#context']->md5();
   if (!isset($seen[$seen_id])) {
     $seen[$seen_id] = TRUE;
@@ -417,6 +417,8 @@ function _drake_visit($task, &$resolution, &$all_tasks, &$seen, $stack) {
       foreach ($task['context'] as $name => $value) {
         $context[$name] = $value;
       }
+      // Set the new context.
+      $task['#context'] = $context;
     }
     if (!empty($task['depends'])) {
       foreach ($task['depends'] as $dependency_name) {
