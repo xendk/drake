@@ -178,12 +178,12 @@ function drush_drake($target = '') {
   unset($task);
 
   if (drush_get_option('show-context', FALSE)) {
-    $context = $start_task['#context']->toArray();
+    $context = (isset($start_task['context']) ? $start_task['context'] : array()) + $start_task['#context']->toArray();
     if (!empty($context)) {
       drush_print(dt('Context for the @task "task":', array('@task' => $start_task['name'])));
       $rows = array(array('Name', 'Value'));
       foreach ($context as $name => $value) {
-
+        $rows[] = array($name, $value);
       }
       drush_print_table($rows, TRUE);
     }
