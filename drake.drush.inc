@@ -167,28 +167,38 @@ function drush_drake($target = '') {
   $total_tasks = sizeof($run_tasks);
   $task_num = 1;
   foreach ($run_tasks as $task) {
-    drush_log(_drake_task_message($task) . ' [' . $task_num++ . '/' . $total_tasks . ']', 'status');
+    try {
+      drush_log(_drake_task_message($task) . ' [' . $task_num++ . '/' . $total_tasks . ']', 'status');
 
-    // We need drush_invoke_process to use post for redispatching, as using get
-    // will loose our drake command option (as it is an array).
-    $backend_options = array(
-      'method' => 'POST',
-      '#output-label' => $task['name'] . ': ',
-    );
-    $command_options = drush_redispatch_get_options();
-    // $command_options['yes'] = TRUE;
-    $task['#context']->resolve($task);
-    $command_options['drake'] = array(
-      'task' => $task,
-      'files' => $files,
-    );
-    // @todo Why no colors?
-    $result = drush_invoke_process('@self', 'drake-process', array($task['name']), $command_options, $backend_options);
-    if ($result['error_status'] !== 0) {
-      // We assume that _drake_run_task already output a message.
+      // We need drush_invoke_process to use post for redispatching, as using get
+      // will loose our drake command option (as it is an array).
+      $backend_options = array(
+        'method' => 'POST',
+        '#output-label' => $task['name'] . ': ',
+      );
+      $command_options = drush_redispatch_get_options();
+      // $command_options['yes'] = TRUE;
+      $task['#context']->resolve($task);
+      $command_options['drake'] = array(
+        'task' => $task,
+        'files' => $files,
+      );
+      // @todo Why no colors?
+      $result = drush_invoke_process('@self', 'drake-process', array($task['name']), $command_options, $backend_options);
+      if ($result['error_status'] !== 0) {
+        // We assume that _drake_run_task already output a message.
+        return FALSE;
+      }
+      drush_log("Done\n", 'ok');
+    }
+    catch (DrakeContextException $e) {
+      drush_set_error('CONTEXT_MISSING', dt('Task @task: @message', array('@task' => $task['name'], '@message' => $e->getMessage())));
       return FALSE;
     }
-    drush_log("Done\n", 'ok');
+    catch (Exception $e) {
+      drush_set_error('EXCEPTION_CAUGHT', dt('Task @task threw exception: @message', array('@task' => $task['name'], '@message' => $e->getMessage())));
+      return FALSE;
+    }
   }
 }
 

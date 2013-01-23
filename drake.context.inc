@@ -39,6 +39,11 @@ class DrakeContextPlaceholder {
 }
 
 /**
+ * An context exception class.
+ */
+class DrakeContextException extends Exception {}
+
+/**
  * Implements the context object.
  *
  * A context wraps a set of variables for tasks. It may also have a parent
@@ -132,7 +137,7 @@ class DrakeContext implements ArrayAccess {
       }
       else {
         // @todo Dedicated exception, or something else?
-        throw new Exception('No such context ' . $offset);
+        throw new DrakeContextException('No such context "' . $offset . '"');
       }
     }
   }
