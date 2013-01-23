@@ -106,6 +106,18 @@ function drush_drake($target = '') {
   $actions = drake_standard_actions();
 
   $global_context = new DrakeContext();
+  // Set up global context.
+  $self_record = drush_sitealias_get_record('@self');
+  if (!empty($self_record)) {
+    // Oddly, it might be '@self'.
+    if ($self_record['#name'] == '@self') {
+      $global_context['@self'] = '@self';
+    }
+    else {
+      $global_context['@self'] = '@' . $self_record['#name'];
+    }
+  }
+
   foreach ($files as $file) {
     // @todo investigate whether this is the most kosher way to include file.
     $context = new DrakeContext($global_context);
