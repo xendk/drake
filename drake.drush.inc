@@ -19,8 +19,9 @@ function drake_drush_command() {
     ),
     'options' => array(
       'file' => 'Use specified file.',
-      'list' => 'List available tasks.',
-      'list-files' => 'List used drakefiles.',
+      'show-tasks' => 'List available tasks.',
+      'show-files' => 'List used drakefiles.',
+      'show-context' => 'List the context for the given (or default) task.',
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
@@ -94,7 +95,7 @@ function drush_drake($target = '') {
   }
 
   // @todo make this a separate command?
-  if (drush_get_option('list-files', FALSE)) {
+  if (drush_get_option('show-files', FALSE)) {
     drush_log(dt('Loaded drakefiles::'), 'status');
     foreach ($files as $file) {
       drush_log($file, 'status');
@@ -135,7 +136,7 @@ function drush_drake($target = '') {
   _drake_index_array($actions, 'name');
 
   // @todo make this a separate command?
-  if (drush_get_option('list', FALSE)) {
+  if (drush_get_option('show-tasks', FALSE)) {
     drush_log(dt('Available tasks:'), 'status');
     drush_log(join(', ', array_keys($tasks)), 'status');
     return;
@@ -175,6 +176,22 @@ function drush_drake($target = '') {
   }
   // Unset reference, else the following foreach loop will munge the last task.
   unset($task);
+
+  if (drush_get_option('show-context', FALSE)) {
+    $context = $start_task['#context']->toArray();
+    if (!empty($context)) {
+      drush_print(dt('Context for the @task "task":', array('@task' => $start_task['name'])));
+      $rows = array(array('Name', 'Value'));
+      foreach ($context as $name => $value) {
+
+      }
+      drush_print_table($rows, TRUE);
+    }
+    else {
+      drush_print(dt('No context variables for "@task" task.', array('@task' => $start_task['name'])));
+    }
+    return;
+  }
 
   $total_tasks = sizeof($run_tasks);
   $task_num = 1;
