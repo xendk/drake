@@ -47,7 +47,7 @@ function drake_drush_command() {
 function drake_drush_help($section) {
   switch ($section) {
     case 'meta:drake:title':
-      return dt('Do');
+      return dt('Drake');
     case 'meta:drake:summary':
       return dt('Do stuff.');
     case 'drush:drake':
