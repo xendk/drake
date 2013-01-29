@@ -94,6 +94,7 @@ function drush_drake($target = '') {
     return drush_set_error('NO_DRAKEFILE_FILE', dt('No drakefile.php files found or specified'));
   }
 
+  $files = array_reverse($files);
   // @todo make this a separate command?
   if (drush_get_option('show-files', FALSE)) {
     drush_print(dt('Loaded drakefiles:'));
