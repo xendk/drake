@@ -338,13 +338,18 @@ function _drake_prepare_task(&$task, &$actions) {
       $task_actions = array();
       // Explode the multiple parameter to multiple actions.
       foreach ($task[$muliple_parm . 's'] as $key => $params) {
-        // If the key is int, use the value as command. Allows for using simple
-        // array shorthand when no additional parameters is needed.
+        // If the key is int, use the value as command.
         if (is_int($key)) {
-          $key = $params;
-          $params = array();
+          // If the params isn't an array, assume it's a simple command string.
+          if (!is_array($params)) {
+            $params = array($muliple_parm => $params);
+          }
         }
-        $task_actions[] = array($muliple_parm => $key) + $params + $task + $action_defaults;
+        else {
+          // Else use the key as the command.
+          $params += array($muliple_parm => $key);
+        }
+        $task_actions[] = $params + $task + $action_defaults;
       }
     }
     else {
