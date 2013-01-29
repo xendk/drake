@@ -22,6 +22,7 @@ function drake_drush_command() {
       'show-tasks' => 'List available tasks.',
       'show-files' => 'List used drakefiles.',
       'show-context' => 'List the context for the given (or default) task.',
+      'ignore-current-dir' => 'Ignore drakefile.php in the current directory',
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
@@ -83,10 +84,12 @@ function drush_drake($target = '') {
         $files[] = $site_all;
       }
     }
-
-    // Use a drakefile file in the current directory.
-    if (file_exists('drakefile.php')) {
-      $files[] = 'drakefile.php';
+    // Check current directory if alias was not defined on the command line.
+    if (!drush_get_context('DRUSH_TARGET_SITE_ALIAS')) {
+      // Use a drakefile file in the current directory.
+      if (file_exists('drakefile.php') && !drush_get_option('ignore-current-dir', FALSE)) {
+        $files[] = 'drakefile.php';
+      }
     }
   }
 
