@@ -50,11 +50,19 @@ $tasks['multiple-shell-action-simple'] = array(
   'commands' => array('echo "Slartibartfast"', 'echo "Deriparamaxx"'),
 );
 
-$tasks['multiple-shell-action-params'] = array(
+$tasks['multiple-shell-action-params-keyed'] = array(
   'action' => 'shell',
   'commands' => array(
     'echo "Slartibartfast"' => array(),
     'echo "Deriparamaxx"' => array(),
+  ),
+);
+
+$tasks['multiple-shell-action-params-flat'] = array(
+  'action' => 'shell',
+  'commands' => array(
+    array('command' => 'echo', 'args' => array("Slartibartfast")),
+    array('command' => 'echo', 'args' => array("Deriparamaxx")),
   ),
 );
 

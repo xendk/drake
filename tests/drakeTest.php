@@ -139,7 +139,13 @@ class DrakeCase extends Drush_CommandTestCase {
     $this->assertRegExp('/Deriparamaxx/', $this->getOutput());
 
     // Test that an array of commands with additional params work.
-    $this->drush('drake', array('multiple-shell-action-params'), $this->options);
+    $this->drush('drake', array('multiple-shell-action-params-keyed'), $this->options);
+    // Check for shell command output.
+    $this->assertRegExp('/Slartibartfast/', $this->getOutput());
+    $this->assertRegExp('/Deriparamaxx/', $this->getOutput());
+
+    // Test that an array of commands with additional params work.
+    $this->drush('drake', array('multiple-shell-action-params-flat'), $this->options);
     // Check for shell command output.
     $this->assertRegExp('/Slartibartfast/', $this->getOutput());
     $this->assertRegExp('/Deriparamaxx/', $this->getOutput());
