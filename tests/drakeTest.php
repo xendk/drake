@@ -50,6 +50,56 @@ class DrakeCase extends Drush_CommandTestCase {
     $this->assertRegExp('/Recursive dependency/', $this->getOutput());
   }
 
+  function testDrakefileDiscovery() {
+    // No file should give an error.
+    $this->drush('drake 2>&1', array(), array(), NULL, NULL, self::EXIT_ERROR);
+    // Check error message.
+    $this->assertRegExp('/No drakefile.php files found or specified/', $this->getOutput());
+
+    // A makefile in the current directory should be used.
+    copy(dirname(__FILE__) . '/simple.drakefile.php', './drakefile.php');
+    $this->drush('drake');
+    // Check output.
+    $this->assertRegExp('/Simple drakefile\./', $this->getOutput());
+    unlink('./drakefile.php');
+
+    // A drakefile.php in sites/all/drush should be used.
+    $this->setUpDrupal(1);
+    // mkdir($this->webroot() . '/sites/all/drush');
+    copy(dirname(__FILE__) . '/site.drakefile.php',
+      $this->webroot() . '/sites/all/drush/drakefile.php');
+
+    $this->drush('@dev drake');
+    // Check output.
+    $this->assertRegExp('/Site drakefile\./', $this->getOutput());
+
+    // Check that drakefile in the current directory is ignored when alias is
+    // specified on the commandline.
+    copy(dirname(__FILE__) . '/simple.drakefile.php', './drakefile.php');
+    $this->drush('@dev drake');
+    $this->assertRegExp('/Site drakefile\./', $this->getOutput());
+    $this->drush('@dev drake', array('site'));
+    // Check output.
+    $this->assertRegExp('/Site drakefile\./', $this->getOutput());
+    unlink('./drakefile.php');
+
+    // Test that the site drakefile is found when we're in the site dir.
+    chdir($this->webroot());
+    $this->drush('drake');
+    // Check output.
+    $this->assertRegExp('/Site drakefile\./', $this->getOutput());
+
+    // Check that a drakefile in the current directory takes precedence over
+    // sitewide.
+    copy(dirname(__FILE__) . '/simple.drakefile.php', './drakefile.php');
+    $this->drush('drake');
+    $this->assertRegExp('/Simple drakefile\./', $this->getOutput());
+    $this->drush('drake', array('site'));
+    // Check output.
+    $this->assertRegExp('/Site drakefile\./', $this->getOutput());
+    unlink('./drakefile.php');
+  }
+
   function testStringDependency() {
     $this->drush('drake', array('string-dependency'), $this->options);
     // Check for shell command output.
