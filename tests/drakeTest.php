@@ -100,6 +100,32 @@ class DrakeCase extends Drush_CommandTestCase {
     unlink('./drakefile.php');
   }
 
+  function testContextReplacement() {
+    // A makefile in the current directory should be used.
+    copy(dirname(__FILE__) . '/context.drakefile.php', './drakefile.php');
+    $this->drush('drake', array('simple'));
+    // Check output.
+    $this->assertRegExp('/simple: value1/', $this->getOutput());
+
+    $this->drush('drake', array('replaced'));
+    // Check output.
+    $this->assertRegExp('/replaced: value1/', $this->getOutput());
+
+    $this->drush('drake', array('replaced-with-extra'));
+    // Check output.
+    $this->assertRegExp('/replaced-with-extra: before value1 after/', $this->getOutput());
+
+    $this->drush('drake', array('string-manipulation'));
+    // Check output.
+    $this->assertRegExp('/string-manipulation: before VALUE1 after/', $this->getOutput());
+
+    $this->drush('drake 2>&1', array('unknown-manipulation'), array(), NULL, NULL, self::EXIT_ERROR);
+    // Check output.
+    $this->assertRegExp('/Unknown or invalid operation/', $this->getOutput());
+
+    unlink('./drakefile.php');
+  }
+
   function testStringDependency() {
     $this->drush('drake', array('string-dependency'), $this->options);
     // Check for shell command output.

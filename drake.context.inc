@@ -17,10 +17,6 @@ function context($name) {
   return new DrakeContextPlaceholder($name);
 }
 
-function context_path($path, $repl = array()) {
-  return new DrakeContextPathPlaceholder($path, $repl);
-}
-
 function drake_argument($index, $description) {
   return new DrakeContextArgPlaceholder($index, $description);
 }
@@ -49,33 +45,89 @@ class DrakeContextPlaceholder {
    * Resolves the placeholder to an value.
    */
   public function resolve(DrakeContext $context) {
-    return $context[$this->name()];
+    if (!preg_match_all('/\\[([^]]*)\\]/', $this->name, $matches, PREG_SET_ORDER)) {
+      // Same structure as what preg_match_all returns.
+      $matches = array(
+        array(
+          $this->name,
+          $this->name,
+        ),
+      );
+    }
+
+    $values = array();
+    foreach ($matches as $match) {
+      $pipeline = explode(':', $match[1]);
+      $value = $context[array_shift($pipeline)];
+      foreach ($pipeline as $op) {
+        $method = 'get' . ucfirst($op);
+        if (is_object($value) && method_exists($value, $method)) {
+          $value = $value->{$method}();
+        }
+        else {
+          $class_name = "DrakeContextPlaceholder" . ucfirst($op) . "Op";
+          if (class_exists($class_name)) {
+            $value = new $class_name($value);
+          }
+          else {
+            throw new DrakeContextException(dt('Unknown or invalid operation "@op" in context string "@context"', array('@op' => $op, '@context' => $match[1])));
+          }
+        }
+      }
+      $values[$match[0]] = (string) $value;
+    }
+    return strtr($this->name(), $values);
   }
 }
 
-/**
- * Implements the context placeholder object.
- */
-class DrakeContextPathPlaceholder extends DrakeContextPlaceholder {
-  protected $repl;
+class DrakeContextPlaceholderSiteOp {
+  protected $site;
 
-  /**
-   * Constructs the placeholder.
-   */
-  public function __construct($name, $repl) {
-    $this->name = $name;
-    $this->repl = $repl;
+  public function __construct($value) {
+    $this->site = $value;
+  }
+  public function __toString() {
+    return $this->site;
   }
 
-  /**
-   * Resolves the placeholder to an value.
-   */
-  public function resolve(DrakeContext $context) {
-    $repl = array();
-    foreach ($this->repl as $key => $value) {
-      $repl[$key] = $context[$value];
+  public function getRoot() {
+    $self_record = drush_sitealias_get_record($this->site);
+    if (!empty($self_record)) {
+      // Oddly, it might be '@self'.
+      if ($self_record['#name'] == '@self') {
+        $global_context['@self'] = '@self';
+      }
+      else {
+        $global_context['@self'] = '@' . $self_record['#name'];
+      }
+      // Add in root.
+      if (!empty($self_record['root'])) {
+        return $self_record['root'];
+      }
+      throw new DrakeContextException(dt('No site root found for "@site"', array('@site' => $this->site)));
     }
-    return strtr($this->name(), $repl);
+    else {
+      throw new DrakeContextException(dt('No "@site" site found', array('@site' => $this->site)));
+    }
+  }
+}
+
+class DrakeContextPlaceholderStringOp {
+  protected $string;
+
+  public function __construct($value) {
+    $this->string = $value;
+  }
+  public function __toString() {
+    return $this->string;
+  }
+
+  public function getUpcase() {
+    return strtoupper($this->string);
+  }
+
+  public function getDowncase() {
+    return strtolower($this->string);
   }
 }
 
@@ -99,8 +151,8 @@ class DrakeContextArgPlaceholder extends DrakeContextPlaceholder {
     try {
       return $context['arg' . $this->name];
     }
-    catch (DrakeContextException $e) {
-      throw new DrakeContextException("Missing argument: " . $this->description);
+    catch (DrakeContextNotFoundException $e) {
+      throw new DrakeContextNotFoundException("Missing argument: " . $this->description);
     }
   }
 }
@@ -109,6 +161,7 @@ class DrakeContextArgPlaceholder extends DrakeContextPlaceholder {
  * An context exception class.
  */
 class DrakeContextException extends Exception {}
+class DrakeContextNotFoundException extends DrakeContextException {}
 
 /**
  * Implements the context object.
@@ -213,14 +266,14 @@ class DrakeContext implements ArrayAccess {
           try {
             return $parent[$offset];
           }
-          catch (DrakeContextException $e) {
+          catch (DrakeContextNotFoundException $e) {
             // Do nothing, try the next parent.
           }
         }
       }
     }
     // Couldn't find a value, throw exception.
-    throw new DrakeContextException('No such context "' . $offset . '"');
+    throw new DrakeContextNotFoundException('No such context "' . $offset . '"');
   }
 
   /**
