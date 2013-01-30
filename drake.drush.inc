@@ -152,6 +152,10 @@ function drush_drake($target = '') {
     else {
       $global_context['@self'] = '@' . $self_record['#name'];
     }
+    // Add in root.
+    if (!empty($self_record['root'])) {
+      $global_context['@self.root'] = $self_record['root'];
+    }
   }
 
   foreach ($files as $file) {
