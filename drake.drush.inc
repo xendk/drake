@@ -68,7 +68,19 @@ function drush_drake($target = '') {
   $file = drush_get_option('file', NULL);
   if (!empty($file)) {
     // A file was specified, use that.
-    if (!file_exists($file)) {
+    $url = parse_url($file);
+    if ($url['scheme']) {
+      // Remote file, save it to a temp file so we can include it.
+      $data = file_get_contents($file);
+      if ($data === FALSE) {
+        return drush_set_error('FETCH_ERROR', dt('Could not fetch drakefile from @uri.', array('@uri' => $file)));
+      }
+      else {
+        $file = drush_save_data_to_temp_file($data, '.php');
+      }
+    }
+    elseif (!file_exists($file)) {
+      // Check that the file exists.
       return drush_set_error('MISSING_FILE', dt('File @file not found.', array('@file' => $file)));
     }
     // Override files.
@@ -124,7 +136,6 @@ function drush_drake($target = '') {
   }
 
   foreach ($files as $file) {
-    // @todo investigate whether this is the most kosher way to include file.
     $context = new DrakeContext($global_context);
     $res = _drake_load_file($file, $context);
     if (!empty($res['tasks'])) {
@@ -248,7 +259,7 @@ function drush_drake_process($target) {
     // Load the drakefiles to define the functions they contain.
     foreach ($drake['files'] as $file) {
       // @todo investigate whether this is the most kosher way to include file.
-      include($file);
+      require $file;
     }
   }
   if (_drake_run_task($drake['task']) === FALSE) {
@@ -268,7 +279,8 @@ function drush_drake_process($target) {
  * Adds context objects to tasks and actions and saves file scope context.
  */
 function _drake_load_file($_drake_file, $_drake_context) {
-  include $_drake_file;
+  require $_drake_file;
+
   $return = array();
   if (!empty($tasks)) {
     foreach ($tasks as &$task) {
