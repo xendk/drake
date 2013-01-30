@@ -119,10 +119,29 @@ function drush_drake($target = '') {
     return;
   }
 
+  $arguments = func_get_args();
+  // Loose the target.
+  array_shift($arguments);
+
   $tasks = array();
   $actions = drake_standard_actions();
 
   $global_context = new DrakeContext();
+  $i = 1;
+  // Create context from command line arguments.
+  foreach ($arguments as $argument) {
+    // If the argument contains an =, it's a key=value argument.
+    $arg = preg_split('/(?<!\\\)=/', $argument, 2);
+    if (!isset($arg[1])) {
+      // If no = was found, name it sequentially.
+      $arg[1] = $arg[0];
+      $arg[0] = 'arg' . $i;
+    }
+    // Remove = escaping.
+    $arg = preg_replace('/\\\=/', '=', $arg);
+    $global_context[$arg[0]] = $arg[1];
+  }
+
   // Set up global context.
   $self_record = drush_sitealias_get_record('@self');
   if (!empty($self_record)) {
