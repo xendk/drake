@@ -17,8 +17,12 @@ function context($name) {
   return new DrakeContextPlaceholder($name);
 }
 
+function context_path($path, $repl = array()) {
+  return new DrakeContextPathPlaceholder($path, $repl);
+}
+
 /**
- * Implements the context placeholder object.
+ * Implements the basic context placeholder object.
  */
 class DrakeContextPlaceholder {
   protected $name;
@@ -35,6 +39,46 @@ class DrakeContextPlaceholder {
    */
   public function name() {
     return $this->name;
+  }
+
+  /**
+   * Resolves the placeholder to an value.
+   */
+  public function resolve(DrakeContext $context) {
+    return $context[$this->name()];
+  }
+}
+
+/**
+ * Implements the context placeholder object.
+ */
+class DrakeContextPathPlaceholder extends DrakeContextPlaceholder {
+  protected $repl;
+
+  /**
+   * Constructs the placeholder.
+   */
+  public function __construct($name, $repl) {
+    $this->name = $name;
+    $this->repl = $repl;
+  }
+
+  /**
+   * Returns the name of this placeholder.
+   */
+  public function name() {
+    return $this->name;
+  }
+
+  /**
+   * Resolves the placeholder to an value.
+   */
+  public function resolve(DrakeContext $context) {
+    $repl = array();
+    foreach ($this->repl as $key => $value) {
+      $repl[$key] = $context[$value];
+    }
+    return strtr($this->name(), $repl);
   }
 }
 
@@ -86,8 +130,9 @@ class DrakeContext implements ArrayAccess {
    * If the given value is not a context placeholder, nothing is done.
    */
   function resolve_value(&$value) {
-    if ($value instanceof DrakeContextPlaceholder) {
-      $value = $this[$value->name()];
+    // Using while, as the value might also be a placeholder.
+    while ($value instanceof DrakeContextPlaceholder) {
+      $value = $value->resolve($this);
     }
   }
 
