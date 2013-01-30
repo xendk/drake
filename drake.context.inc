@@ -21,6 +21,10 @@ function context_path($path, $repl = array()) {
   return new DrakeContextPathPlaceholder($path, $repl);
 }
 
+function drake_argument($index, $description) {
+  return new DrakeContextArgPlaceholder($index, $description);
+}
+
 /**
  * Implements the basic context placeholder object.
  */
@@ -64,13 +68,6 @@ class DrakeContextPathPlaceholder extends DrakeContextPlaceholder {
   }
 
   /**
-   * Returns the name of this placeholder.
-   */
-  public function name() {
-    return $this->name;
-  }
-
-  /**
    * Resolves the placeholder to an value.
    */
   public function resolve(DrakeContext $context) {
@@ -79,6 +76,32 @@ class DrakeContextPathPlaceholder extends DrakeContextPlaceholder {
       $repl[$key] = $context[$value];
     }
     return strtr($this->name(), $repl);
+  }
+}
+
+/**
+ * Placeholder for arguments.
+ */
+class DrakeContextArgPlaceholder extends DrakeContextPlaceholder {
+  protected $description;
+  /**
+   * Constructs the placeholder.
+   */
+  public function __construct($index, $description) {
+    $this->name = $index;
+    $this->description = $description;
+  }
+
+  /**
+   * Resolves the placeholder to an value.
+   */
+  public function resolve(DrakeContext $context) {
+    try {
+      return $context['arg' . $this->name];
+    }
+    catch (DrakeContextException $e) {
+      throw new DrakeContextException("Missing argument: " . $this->description);
+    }
   }
 }
 
