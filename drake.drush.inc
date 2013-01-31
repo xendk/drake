@@ -218,7 +218,7 @@ function drush_drake($target = '') {
   if (drush_get_option('show-context', FALSE)) {
     $context = $start_task['#context']->toArray();
     if (!empty($context)) {
-      drush_print(dt('Context for the @task "task":', array('@task' => $start_task['name'])));
+      drush_print(dt('Context for the "@task" task:', array('@task' => $start_task['name'])));
       $rows = array(array('Name', 'Value'));
       foreach ($context as $name => $value) {
         $rows[] = array($name, $value);
