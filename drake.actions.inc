@@ -45,6 +45,24 @@ function drake_standard_actions() {
         ),
       ),
     ),
+    'drake' => array(
+      'callback' => 'drake_action_drake',
+      'multiple' => 'file',
+      'parameters' => array(
+        'dir' => array(
+          'description' => 'The directory to run drake in.',
+          'default' => '',
+        ),
+        'task' => array(
+          'description' => 'The task to run.',
+          'default' => '',
+        ),
+        'target' => array(
+          'description' => 'Site-alias to run the command on (default: @self)',
+          'default' => '@self',
+        ),
+      ),
+    ),
   );
 }
 
@@ -99,5 +117,30 @@ function drake_action_drush($context) {
 
   if (!$res || $res['error_status'] != 0) {
     return drake_action_error(dt('command failed.'));
+  }
+}
+
+/**
+ * Drake action.
+ *
+ * Execute a drake file.
+ */
+function drake_action_drake($context) {
+  $args = $options = array();
+  if ($context['task']) {
+    $args[] = $context['task'];
+  }
+  $old_dir = NULL;
+  if ($context['dir']) {
+    $old_dir = getcwd();
+    chdir($context['dir']);
+  }
+  $res = drush_invoke_process($context['target'], 'drake', $args, $options, TRUE);
+  if ($old_dir) {
+    chdir($old_dir);
+  }
+
+  if (!$res || $res['error_status'] != 0) {
+    return drake_action_error(dt('drake failed.'));
   }
 }
