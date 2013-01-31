@@ -238,7 +238,7 @@ function drush_drake($target = '') {
 
   $total_tasks = sizeof($run_tasks);
   $task_num = 1;
-  $dir = realpath(getcwd());
+  $dir = getcwd();
   foreach ($run_tasks as $task) {
     try {
       drush_log(_drake_task_message($task) . ' [' . $task_num++ . '/' . $total_tasks . ']', 'status');
