@@ -103,6 +103,35 @@ class DrakeContextPlaceholder {
   }
 }
 
+/**
+ * Placeholder for arguments.
+ */
+class DrakeContextArgPlaceholder extends DrakeContextPlaceholder {
+  protected $description;
+  /**
+   * Constructs the placeholder.
+   */
+  public function __construct($index, $description, $optional = FALSE, $default_value = NULL) {
+    parent::__construct($index, $optional, $default_value);
+    $this->description = $description;
+  }
+
+  /**
+   * Resolves the placeholder to an value.
+   */
+  public function resolve(DrakeContext $context) {
+    try {
+      return $context['arg' . $this->name];
+    }
+    catch (DrakeContextNotFoundException $e) {
+      if ($this->optional) {
+        return $this->default_value;
+      }
+      throw new DrakeContextNotFoundException("Missing argument: " . $this->description);
+    }
+  }
+}
+
 class DrakeContextPlaceholderSiteOp {
   protected $site;
 
@@ -151,35 +180,6 @@ class DrakeContextPlaceholderStringOp {
 
   public function getDowncase() {
     return strtolower($this->string);
-  }
-}
-
-/**
- * Placeholder for arguments.
- */
-class DrakeContextArgPlaceholder extends DrakeContextPlaceholder {
-  protected $description;
-  /**
-   * Constructs the placeholder.
-   */
-  public function __construct($index, $description, $optional = FALSE, $default_value = NULL) {
-    parent::__construct($index, $optional, $default_value);
-    $this->description = $description;
-  }
-
-  /**
-   * Resolves the placeholder to an value.
-   */
-  public function resolve(DrakeContext $context) {
-    try {
-      return $context['arg' . $this->name];
-    }
-    catch (DrakeContextNotFoundException $e) {
-      if ($this->optional) {
-        return $this->default_value;
-      }
-      throw new DrakeContextNotFoundException("Missing argument: " . $this->description);
-    }
   }
 }
 
