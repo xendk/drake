@@ -1,5 +1,7 @@
 <?php
 
+$api = 1;
+
 $tasks['simple'] = array(
   'action' => 'context_check',
   'to-check' => drake_argument(1, "string to print"),

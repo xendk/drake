@@ -1,5 +1,7 @@
 <?php
 
+$api = 1;
+
 $context = array(
   'to_echo' => 'Marvin',
 );

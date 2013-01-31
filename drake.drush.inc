@@ -8,6 +8,8 @@
 include_once 'drake.context.inc';
 include_once 'drake.actions.inc';
 
+define('DRAKE_API_VERSION', 1);
+
 /**
  * Implements hook_drush_command().
  */
@@ -161,6 +163,9 @@ function drush_drake($target = '') {
   foreach ($files as $file) {
     $context = new DrakeContext($global_context);
     $res = _drake_load_file($file, $context);
+    if ($res === FALSE) {
+      return $res;
+    }
     if (!empty($res['tasks'])) {
       $tasks = array_merge($tasks, $res['tasks']);
     }
@@ -308,6 +313,10 @@ function drush_drake_process($target) {
  */
 function _drake_load_file($_drake_file, $_drake_context) {
   require $_drake_file;
+
+  if ($api != 1) {
+    return drush_set_error('BAD_API', dt("No api version in file. Add in \$api = 1;"));
+  }
 
   $return = array();
   if (!empty($tasks)) {

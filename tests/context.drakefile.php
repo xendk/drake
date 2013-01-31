@@ -1,5 +1,7 @@
 <?php
 
+$api = 1;
+
 $context = array(
   'context1' => 'value1',
   'context2' => 'value2',
