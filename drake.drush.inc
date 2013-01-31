@@ -233,6 +233,7 @@ function drush_drake($target = '') {
 
   $total_tasks = sizeof($run_tasks);
   $task_num = 1;
+  $dir = realpath(getcwd());
   foreach ($run_tasks as $task) {
     try {
       drush_log(_drake_task_message($task) . ' [' . $task_num++ . '/' . $total_tasks . ']', 'status');
@@ -251,6 +252,10 @@ function drush_drake($target = '') {
         'files' => $files,
       );
       $result = drush_invoke_process('@self', 'drake-process', array($task['name']), $command_options, $backend_options);
+
+      // Make, situs and other build tools might pull the rug out from under our
+      // feet. Reenter the directory in case someone moved a new version in.
+      chdir($dir);
       if ($result['error_status'] !== 0) {
         // We assume that _drake_run_task already output a message.
         return FALSE;
