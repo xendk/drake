@@ -26,7 +26,7 @@ function drake_argument($index, $description) {
 }
 
 
-function drake_argument_optional($index, $description, $default_value) {
+function drake_argument_optional($index, $description, $default_value = NULL) {
   return new DrakeContextArgPlaceholder($index, $description, TRUE, $default_value);
 }
 
@@ -72,8 +72,11 @@ class DrakeContextPlaceholder {
       $values = array();
       foreach ($matches as $match) {
         $pipeline = explode(':', $match[1]);
-        $value = array_shift($pipeline);
-        $context->resolve(&$value);
+        $value = $context[array_shift($pipeline)];
+        // In case context contains an context object.
+        if ($value instanceof DrakeContextPlaceholder) {
+          $value = $value->resolve($context);
+        }
         foreach ($pipeline as $op) {
           $method = 'get' . ucfirst($op);
           if (is_object($value) && method_exists($value, $method)) {

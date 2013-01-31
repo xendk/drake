@@ -7,12 +7,12 @@ $tasks['simple'] = array(
 
 $tasks['simple-optional'] = array(
   'action' => 'context_check',
-  'to-check' => drake_argument_optional(1, "string to print"),
+  'to-check' => drake_argument_optional(1, "string2 to print"),
 );
 
 $tasks['simple-optional-default'] = array(
   'action' => 'context_check',
-  'to-check' => drake_argument_optional(1, "string to print", 'default-value'),
+  'to-check' => drake_argument_optional(1, "string3 to print", 'default-value'),
 );
 
 $actions['context_check'] = array(
