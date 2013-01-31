@@ -139,7 +139,7 @@ function drush_drake($target = '') {
     }
     // Remove = escaping.
     $arg = preg_replace('/\\\=/', '=', $arg);
-    $global_context[$arg[0]] = $arg[1];
+    $global_context->force($arg[0], $arg[1]);
   }
 
   // Set up global context.

@@ -67,6 +67,11 @@ $tasks['optional-context-default'] = array(
   'to-check' => context_optional('test', 'ocd-default-value'),
 );
 
+$tasks['override-context'] = array(
+  'action' => 'context_check',
+  'to-check' => context('context1'),
+);
+
 $actions['print'] = array(
   'callback' => 'drake_print',
 );

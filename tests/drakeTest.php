@@ -138,6 +138,17 @@ class DrakeCase extends Drush_CommandTestCase {
     // Check output.
     $this->assertRegExp('/optional-context-default: Context is set with value: ocd-default-value/', $this->getOutput());
 
+    // Test that command line definition overrides.
+    // First check the set value.
+    $this->drush('drake', array('override-context'));
+    // Check output.
+    $this->assertRegExp('/override-context: Context is set with value: value1/', $this->getOutput());
+
+    // Then try to override.
+    $this->drush('drake', array('override-context', 'context1=new-value'));
+    // Check output.
+    $this->assertRegExp('/override-context: Context is set with value: new-value/', $this->getOutput());
+
     unlink('./drakefile.php');
   }
 

@@ -201,6 +201,7 @@ class DrakeContextNotFoundException extends DrakeContextException {}
 class DrakeContext implements ArrayAccess {
   protected $parents;
   protected $values = array();
+  protected $forced = array();
 
   /**
    * Constructs a new context.
@@ -213,6 +214,24 @@ class DrakeContext implements ArrayAccess {
       $parents = array($parents);
     }
     $this->parents = $parents;
+  }
+
+
+  /**
+   * Enforce a value.
+   *
+   * This causes the value to be enforced in child contexts.
+   */
+  function force($key, $value) {
+    $this[$key] = $value;
+    $this->forced[$key] = TRUE;
+  }
+
+  /**
+   * Whether a given key is forced.
+   */
+  function is_forced($key) {
+    return isset($this->forced[$key]);
   }
 
   /**
@@ -313,6 +332,14 @@ class DrakeContext implements ArrayAccess {
    * Implements ArrayAccess::offsetSet().
    */
   public function offsetSet($offset, $value) {
+    if ($this->parents) {
+      foreach ($this->parents as $parent) {
+        if ($parent->is_forced($offset)) {
+          // Don't set the value if the parent enforces the value.
+          return;
+        }
+      }
+    }
     $this->values[$offset] = $value;
   }
 
