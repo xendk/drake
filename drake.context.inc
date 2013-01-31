@@ -17,8 +17,17 @@ function context($name) {
   return new DrakeContextPlaceholder($name);
 }
 
+function context_optional($name, $default_value = NULL) {
+  return new DrakeContextPlaceholder($name, TRUE, $default_value);
+}
+
 function drake_argument($index, $description) {
   return new DrakeContextArgPlaceholder($index, $description);
+}
+
+
+function drake_argument_optional($index, $description, $default_value) {
+  return new DrakeContextArgPlaceholder($index, $description, TRUE, $default_value);
 }
 
 /**
@@ -26,12 +35,16 @@ function drake_argument($index, $description) {
  */
 class DrakeContextPlaceholder {
   protected $name;
+  protected $optional;
+  protected $default_value;
 
   /**
    * Constructs the placeholder.
    */
-  public function __construct($name) {
+  public function __construct($name, $optional = FALSE, $default_value = NULL) {
     $this->name = $name;
+    $this->optional = $optional;
+    $this->default_value = $default_value;
   }
 
   /**
@@ -45,38 +58,48 @@ class DrakeContextPlaceholder {
    * Resolves the placeholder to an value.
    */
   public function resolve(DrakeContext $context) {
-    if (!preg_match_all('/\\[([^]]*)\\]/', $this->name, $matches, PREG_SET_ORDER)) {
-      // Same structure as what preg_match_all returns.
-      $matches = array(
-        array(
-          $this->name,
-          $this->name,
-        ),
-      );
-    }
+    try {
+      if (!preg_match_all('/\\[([^]]*)\\]/', $this->name, $matches, PREG_SET_ORDER)) {
+        // Same structure as what preg_match_all returns.
+        $matches = array(
+          array(
+            $this->name,
+            $this->name,
+          ),
+        );
+      }
 
-    $values = array();
-    foreach ($matches as $match) {
-      $pipeline = explode(':', $match[1]);
-      $value = $context[array_shift($pipeline)];
-      foreach ($pipeline as $op) {
-        $method = 'get' . ucfirst($op);
-        if (is_object($value) && method_exists($value, $method)) {
-          $value = $value->{$method}();
-        }
-        else {
-          $class_name = "DrakeContextPlaceholder" . ucfirst($op) . "Op";
-          if (class_exists($class_name)) {
-            $value = new $class_name($value);
+      $values = array();
+      foreach ($matches as $match) {
+        $pipeline = explode(':', $match[1]);
+        $value = array_shift($pipeline);
+        $context->resolve(&$value);
+        foreach ($pipeline as $op) {
+          $method = 'get' . ucfirst($op);
+          if (is_object($value) && method_exists($value, $method)) {
+            $value = $value->{$method}();
           }
           else {
-            throw new DrakeContextException(dt('Unknown or invalid operation "@op" in context string "@context"', array('@op' => $op, '@context' => $match[1])));
+            $class_name = "DrakeContextPlaceholder" . ucfirst($op) . "Op";
+            if (class_exists($class_name)) {
+              $value = new $class_name($value);
+            }
+            else {
+              throw new DrakeContextException(dt('Unknown or invalid operation "@op" in context string "@context"', array('@op' => $op, '@context' => $match[1])));
+            }
           }
         }
+        $values[$match[0]] = (string) $value;
       }
-      $values[$match[0]] = (string) $value;
+      return strtr($this->name(), $values);
     }
-    return strtr($this->name(), $values);
+    catch (DrakeContextNotFoundException $e) {
+      if ($this->optional) {
+        return $this->default_value;
+      }
+      // Else rethrow.
+      throw $e;
+    }
   }
 }
 
@@ -139,8 +162,8 @@ class DrakeContextArgPlaceholder extends DrakeContextPlaceholder {
   /**
    * Constructs the placeholder.
    */
-  public function __construct($index, $description) {
-    $this->name = $index;
+  public function __construct($index, $description, $optional = FALSE, $default_value = NULL) {
+    parent::__construct($index, $optional, $default_value);
     $this->description = $description;
   }
 
@@ -152,6 +175,9 @@ class DrakeContextArgPlaceholder extends DrakeContextPlaceholder {
       return $context['arg' . $this->name];
     }
     catch (DrakeContextNotFoundException $e) {
+      if ($this->optional) {
+        return $this->default_value;
+      }
       throw new DrakeContextNotFoundException("Missing argument: " . $this->description);
     }
   }
@@ -209,6 +235,10 @@ class DrakeContext implements ArrayAccess {
     // Using while, as the value might also be a placeholder.
     while ($value instanceof DrakeContextPlaceholder) {
       $value = $value->resolve($this);
+      // If placeholder returned null, remove the value.
+      if (is_null($value)) {
+        unset($value);
+      }
     }
   }
 

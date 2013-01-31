@@ -100,8 +100,7 @@ class DrakeCase extends Drush_CommandTestCase {
     unlink('./drakefile.php');
   }
 
-  function testContextReplacement() {
-    // A makefile in the current directory should be used.
+  function testContexts() {
     copy(dirname(__FILE__) . '/context.drakefile.php', './drakefile.php');
     $this->drush('drake', array('simple'));
     // Check output.
@@ -122,6 +121,57 @@ class DrakeCase extends Drush_CommandTestCase {
     $this->drush('drake 2>&1', array('unknown-manipulation'), array(), NULL, NULL, self::EXIT_ERROR);
     // Check output.
     $this->assertRegExp('/Unknown or invalid operation/', $this->getOutput());
+
+    $this->drush('drake', array('optional-context-set'));
+    // Check output.
+    $this->assertRegExp('/optional-context: Context is set with value: ocs-value/', $this->getOutput());
+
+    $this->drush('drake', array('optional-context-unset'));
+    // Check output.
+    $this->assertRegExp('/optional-context: Context is not set./', $this->getOutput());
+
+    $this->drush('drake', array('optional-context-set-default'));
+    // Check output.
+    $this->assertRegExp('/optional-context-default: Context is set with value: ocsd-value/', $this->getOutput());
+
+    $this->drush('drake', array('optional-context-unset-default'));
+    // Check output.
+    $this->assertRegExp('/optional-context-default: Context is set with value: ocd-default-value/', $this->getOutput());
+
+    unlink('./drakefile.php');
+  }
+
+  function testArguments() {
+    copy(dirname(__FILE__) . '/arguments.drakefile.php', './drakefile.php');
+
+    // Simple argument.
+    $this->drush('drake', array('simple', 'testvalue'));
+    // Check output.
+    $this->assertRegExp('/simple: Context is set with value: testvalue/', $this->getOutput());
+
+    // Simple argument should be required.
+    $this->drush('drake 2>&1', array('simple'), array(), NULL, NULL, self::EXIT_ERROR);
+    // Check output.
+    $this->assertRegExp('/Missing argument: string to print/', $this->getOutput());
+    // Optional argument set.
+    $this->drush('drake', array('simple-optional', 'testvalue'));
+    // Check output.
+    $this->assertRegExp('/simple-optional: Context is set with value: testvalue/', $this->getOutput());
+
+    // Optional argument not set.
+    $this->drush('drake', array('simple-optional'));
+    // Check output.
+    $this->assertRegExp('/simple-optional: Context is not set./', $this->getOutput());
+
+    // Optional argument with default  set.
+    $this->drush('drake', array('simple-optional-default', 'testvalue'));
+    // Check output.
+    $this->assertRegExp('/simple-optional-default: Context is set with value: testvalue/', $this->getOutput());
+
+    // Optional argument with default not set.
+    $this->drush('drake', array('simple-optional-default'));
+    // Check output.
+    $this->assertRegExp('/simple-optional-default: Context is set with value: default-value/', $this->getOutput());
 
     unlink('./drakefile.php');
   }

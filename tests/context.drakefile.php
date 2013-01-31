@@ -31,15 +31,65 @@ $tasks['unknown-manipulation'] = array(
   'output' => context('before [context1:upcase] after'),
 );
 
-$tasks['test'] = array(
-  'action' => 'print',
-  'output' => context('@self:site:root'),
+$tasks['optional-context-set'] = array(
+  'depends' => 'optional-context',
+  'context' => array(
+    'test' => 'ocs-value',
+  ),
+);
+
+$tasks['optional-context-unset'] = array(
+  'depends' => 'optional-context',
+  'context' => array(
+  ),
+);
+
+$tasks['optional-context'] = array(
+  'action' => 'context_check',
+  'to-check' => context_optional('test'),
+);
+
+$tasks['optional-context-set-default'] = array(
+  'depends' => 'optional-context-default',
+  'context' => array(
+    'test' => 'ocsd-value',
+  ),
+);
+
+$tasks['optional-context-unset-default'] = array(
+  'depends' => 'optional-context-default',
+  'context' => array(
+  ),
+);
+
+$tasks['optional-context-default'] = array(
+  'action' => 'context_check',
+  'to-check' => context_optional('test', 'ocd-default-value'),
 );
 
 $actions['print'] = array(
   'callback' => 'drake_print',
 );
 
+$actions['context_check'] = array(
+  'callback' => 'drake_context_check',
+);
+
 function drake_print($context) {
   drush_print($context['output']);
+}
+
+function drake_context_check($context) {
+  $checks = $context['to-check'];
+  if (!is_array($checks)) {
+    $checks = array($checks);
+  }
+  foreach ($checks as $check) {
+    if (isset($check)) {
+      drush_print('Context is set with value: ' . $check);
+    }
+    else {
+      drush_print('Context is not set.');
+    }
+  }
 }
