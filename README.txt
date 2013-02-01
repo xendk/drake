@@ -92,3 +92,49 @@ drakefile), before checking the global context.
 
 Drush Drake sets the context @self to the name of the alias of the
 current site (if any).
+
+Contexts may also specify an format for the string, for example:
+
+<?php
+  'args' => context('--file=[filename]'),
+?>
+
+will replace the `filename` context into the string, and use that as
+args.
+
+A context may also be declared optional by using context_optional
+instead, which takes another, optional, argument which is the default
+value. If the default argument is not used, or it is null, the
+property will be removed if the context is not available. For example:
+
+<?php
+  'args' => context_optional('--file=[filename]'),
+?>
+
+Will remove the `args` key if the context was not found.
+
+Arguments
+=========
+
+Arguments is basically a special case of contexts. When Drake
+initializes, it takes any additional command line arguments, and turns
+them into contexts. Arguments of the form `name=value` sets a named
+context to the given value, while those that does not contain any
+un-escaped equals signs is provided as contexts named arg1, arg2, etc.
+
+When using arguments, you should use drake_argument() (or
+drake_argument_optional()), instead of context(), as it will provide
+the user with more informal error messages. An example:
+
+<?php
+
+$tasks['echo-task'] = array(
+  'action' => 'shell',
+  'command' => 'echo',
+  'args' => array(drake_argument(1, 'the string to echo')),
+);
+
+?>
+
+Will take the first argument on the command line not of the key=val
+form and echo it.
