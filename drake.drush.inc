@@ -163,7 +163,7 @@ function drush_drake($target = '') {
   $realpaths = array();
   foreach ($files as $file) {
     $realpath = realpath($file);
-    if (isset($realpaths[$realpaths])) {
+    if (isset($realpaths[$realpath])) {
       continue;
     }
     $realpaths[$realpath] = TRUE;
