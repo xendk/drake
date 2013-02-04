@@ -160,7 +160,13 @@ function drush_drake($target = '') {
     }
   }
 
+  $realpaths = array();
   foreach ($files as $file) {
+    $realpath = realpath($file);
+    if (isset($realpaths[$realpaths])) {
+      continue;
+    }
+    $realpaths[$realpath] = TRUE;
     $context = new DrakeContext($global_context);
     $res = _drake_load_file($file, $context);
     if ($res === FALSE) {
