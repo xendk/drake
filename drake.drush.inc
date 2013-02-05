@@ -269,14 +269,23 @@ function drush_drake($target = '') {
     return;
   }
 
-  $total_tasks = sizeof($run_tasks);
+  $total_tasks = 0;
+  foreach ($run_tasks as $task) {
+    if (!empty($task['action'])) {
+      $total_tasks++;
+    }
+  }
   $task_num = 1;
   $dir = getcwd();
   foreach ($run_tasks as $task) {
     try {
+      $message_suffix = "\n";
+      if (!empty($task['action'])) {
+        $message_suffix = ' [' . $task_num++ . '/' . $total_tasks . ']';
+      }
       // Message callbacks might use context, so resolve that first.
       $task['#context']->resolve($task);
-      drush_log(_drake_task_message($task) . ' [' . $task_num++ . '/' . $total_tasks . ']', 'status');
+      drush_log(_drake_task_message($task) . $message_suffix, 'status');
 
       // We need drush_invoke_process to use post for redispatching, as using get
       // will loose our drake command option (as it is an array).
@@ -299,7 +308,9 @@ function drush_drake($target = '') {
         // We assume that _drake_run_task already output a message.
         return FALSE;
       }
-      drush_log("Done\n", 'ok');
+      if (!empty($task['action'])) {
+        drush_log("Done\n", 'ok');
+      }
     }
     catch (DrakeContextException $e) {
       drush_set_error('CONTEXT_MISSING', dt('Task @task: @message', array('@task' => $task['name'], '@message' => $e->getMessage())));
