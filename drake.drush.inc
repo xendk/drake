@@ -187,11 +187,22 @@ function drush_drake($target = '') {
     ksort($tasks);
     $rows = array(array(dt('Task'), dt('Description')));
     foreach ($tasks as $task) {
+      $help = NULL;
       if (!empty($task['help'])) {
-        $rows[] = array($task['name'], $task['help']);
+        $help = $task['help'];
       }
       elseif ($all) {
-        $rows[] = array($task['name'], '');
+        $help = "";
+      }
+      if (!is_null($help)) {
+        if ($task['depends']) {
+          if ($help) {
+            $help .= "\n";
+          }
+          $help .= "(Depends on: " . join(', ', $task['depends']). ")";
+        }
+
+        $rows[] = array($task['name'], $help);
       }
     }
     if (sizeof($rows) > 1) {
