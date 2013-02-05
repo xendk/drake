@@ -145,25 +145,28 @@ class DrakeContextPlaceholderSiteOp {
     return $this->site;
   }
 
-  public function getRoot() {
-    $self_record = drush_sitealias_get_record($this->site);
-    if (!empty($self_record)) {
-      // Oddly, it might be '@self'.
-      if ($self_record['#name'] == '@self') {
-        $global_context['@self'] = '@self';
-      }
-      else {
-        $global_context['@self'] = '@' . $self_record['#name'];
-      }
-      // Add in root.
-      if (!empty($self_record['root'])) {
-        return $self_record['root'];
-      }
-      throw new DrakeContextException(dt('No site root found for "@site"', array('@site' => $this->site)));
-    }
-    else {
+  protected function record() {
+    $record = drush_sitealias_get_record($this->site);
+    if (empty($record)) {
       throw new DrakeContextException(dt('No "@site" site found', array('@site' => $this->site)));
     }
+    return $record;
+  }
+
+  public function getRoot() {
+    $record = $this->record();
+    if (!empty($record['root'])) {
+      return $record['root'];
+    }
+    throw new DrakeContextException(dt('No site root found for "@site"', array('@site' => $this->site)));
+  }
+
+  public function getPath() {
+    $record = $this->record();
+    if (!empty($record['root']) && $path = drush_sitealias_local_site_path($record)) {
+      return $path;
+    }
+    throw new DrakeContextException(dt('No site path found for "@site"', array('@site' => $this->site)));
   }
 }
 
