@@ -24,7 +24,8 @@ function drake_drush_command() {
       'show-tasks' => 'List available tasks.',
       'show-files' => 'List used drakefiles.',
       'show-context' => 'List the context for the given (or default) task.',
-      'ignore-current-dir' => 'Ignore drakefile.php in the current directory',
+      'ignore-current-dir' => 'Ignore drakefile.php in the current directory.',
+      'all' => '(with --show-tasks) list all tasks, not just those with description.',
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
@@ -182,8 +183,27 @@ function drush_drake($target = '') {
 
   // @todo make this a separate command?
   if (drush_get_option('show-tasks', FALSE)) {
-    drush_print(dt('Available tasks:'));
-    drush_print(join(', ', array_keys($tasks)));
+    $all = drush_get_option('all', FALSE);
+    ksort($tasks);
+    $rows = array(array(dt('Task'), dt('Description')));
+    foreach ($tasks as $task) {
+      if (!empty($task['help'])) {
+        $rows[] = array($task['name'], $task['help']);
+      }
+      elseif ($all) {
+        $rows[] = array($task['name'], '');
+      }
+    }
+    if (sizeof($rows) > 1) {
+      drush_print(dt('Available tasks:'));
+      drush_print_table($rows, TRUE);
+    }
+    elseif ($all) {
+      drush_log(dt('No tasks found.'), 'error');
+    }
+    else {
+      drush_log(dt('No tasks with descriptions found.'), 'status');
+    }
     return;
   }
 
