@@ -55,6 +55,13 @@ class DrakeContextPlaceholder {
   }
 
   /**
+   * String representation of this context.
+   */
+  public function __toString() {
+    return "[Context " . $this->name . "]";
+  }
+
+  /**
    * Resolves the placeholder to an value.
    */
   public function resolve(DrakeContext $context) {
@@ -117,6 +124,13 @@ class DrakeContextArgPlaceholder extends DrakeContextPlaceholder {
   public function __construct($index, $description, $optional = FALSE, $default_value = NULL) {
     parent::__construct($index, $optional, $default_value);
     $this->description = $description;
+  }
+
+  /**
+   * String representation of this context.
+   */
+  public function __toString() {
+    return "[Argument " . $this->name . "]";
   }
 
   /**

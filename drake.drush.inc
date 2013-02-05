@@ -232,7 +232,7 @@ function drush_drake($target = '') {
       drush_print(dt('Context for the "@task" task:', array('@task' => $start_task['name'])));
       $rows = array(array('Name', 'Value'));
       foreach ($context as $name => $value) {
-        $rows[] = array($name, $value);
+        $rows[] = array($name, (string) $value);
       }
       drush_print_table($rows, TRUE);
     }
