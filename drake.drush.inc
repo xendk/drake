@@ -274,6 +274,8 @@ function drush_drake($target = '') {
   $dir = getcwd();
   foreach ($run_tasks as $task) {
     try {
+      // Message callbacks might use context, so resolve that first.
+      $task['#context']->resolve($task);
       drush_log(_drake_task_message($task) . ' [' . $task_num++ . '/' . $total_tasks . ']', 'status');
 
       // We need drush_invoke_process to use post for redispatching, as using get
@@ -284,7 +286,6 @@ function drush_drake($target = '') {
       );
       $command_options = drush_redispatch_get_options();
       // $command_options['yes'] = TRUE;
-      $task['#context']->resolve($task);
       $command_options['drake'] = array(
         'task' => $task,
         'files' => $files,
@@ -377,7 +378,13 @@ function _drake_load_file($_drake_file, $_drake_context) {
  */
 function _drake_task_message($task) {
   if (!empty($task['message'])) {
-    return $task['message'];
+    $message = $task['message'];
+    if (is_array($message) && function_exists($message[0])) {
+      $function = $message[0];
+      $message[0] = $task;
+      $message = trim(call_user_func_array($function, $message));
+    }
+    return $message;
   }
   else {
     return dt('Doing "@task_name" task', array('@task_name' => $task['name']));
