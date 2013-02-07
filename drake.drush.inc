@@ -6,6 +6,7 @@
  */
 
 include_once 'drake.context.inc';
+include_once 'drake.files.inc';
 include_once 'drake.actions.inc';
 
 define('DRAKE_API_VERSION', 1);

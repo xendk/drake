@@ -30,10 +30,14 @@ function drake_argument_optional($index, $description, $default_value = NULL) {
   return new DrakeContextArgPlaceholder($index, $description, TRUE, $default_value);
 }
 
+interface DrakePlaceholder {
+  public function resolve(DrakeContext $context);
+}
+
 /**
  * Implements the basic context placeholder object.
  */
-class DrakeContextPlaceholder {
+class DrakeContextPlaceholder implements DrakePlaceholder {
   protected $name;
   protected $optional;
   protected $default_value;
@@ -272,7 +276,7 @@ class DrakeContext implements ArrayAccess {
    */
   function resolve_value(&$value) {
     // Using while, as the value might also be a placeholder.
-    while ($value instanceof DrakeContextPlaceholder) {
+    while ($value instanceof DrakePlaceholder) {
       $value = $value->resolve($this);
       // If placeholder returned null, remove the value.
       if (is_null($value)) {

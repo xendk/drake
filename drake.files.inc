@@ -1,0 +1,79 @@
+<?php
+
+/**
+ * @file
+ * File handling helper functionality.
+ */
+
+function files($root, $includes = array(), $excludes = array()) {
+  return new DrakeFilesPlaceholder($root, $includes, $excludes);
+}
+
+class DrakeFilesPlaceholder implements DrakePlaceholder {
+  protected $root;
+  protected $includes;
+  protected $excludes;
+
+  function __construct($root, $includes, $excludes) {
+    $this->root = $root;
+    $this->includes = $includes;
+    $this->excludes = $excludes;
+  }
+
+  function resolve(DrakeContext $context) {
+    $includes = $this->pregify($this->includes);
+    $excludes = $this->pregify($this->excludes);
+
+    // @todo This is a ineffective way to do it, but this is proof of concept of
+    // the file matching functionality. We should do our own scanning.
+    $files = array_keys(drush_scan_directory($this->root, '/.*/'));
+
+    $matched_files = array();
+    foreach ($files as $file) {
+      foreach ($includes as $include) {
+        if (preg_match($include, $file)) {
+          // File is included, check if it's excluded.
+          foreach ($excludes as $exclude) {
+            if (preg_match($exclude, $file)) {
+              // Break out two loops.
+              continue 2;
+            }
+          }
+          $matched_files[] = $file;
+        }
+      }
+    }
+    return $matched_files;
+  }
+
+  function pregify($patterns) {
+    // RegExp escaping: an extreme sport..
+    $from = array(
+      '/\\\\\\?/',
+      '/\\\\\\*/',
+      '/\\\\\\*\\\\\\*/',
+    );
+    $to = array(
+      '.',
+      '[^/]*',
+      '.*',
+    );
+
+    $preg_patterns = array();
+    if (!is_array($patterns)) {
+      $patterns = array($patterns);
+    }
+    foreach ($patterns as $pattern) {
+      $pattern = preg_replace($from, $to, preg_quote($pattern, '{}'));
+      // Anchor pattern to start of string, if it starts with a slash.
+      if ($pattern[0] == '/') {
+        $pattern[0] = '^';
+      }
+      // Anchor to end.
+      $pattern .= '$';
+      $preg_patterns[] = '{' . $pattern . '}';
+    }
+
+    return $preg_patterns;
+  }
+}
