@@ -65,8 +65,25 @@ function drake_drush_help($section) {
  * Executes the main drake command.
  */
 function drush_drake($target = '') {
+  // Drake files to include.
+  $include_files = array();
   // Drake files to load.
   $files = array();
+
+  // Include common system wide drakefiles and drakefiles in .drush.
+  $dirs = array();
+  // In the system wide configuration folder.
+  $dirs[] = drush_get_context('DRUSH_SITE_WIDE_CONFIGURATION');
+
+  // User .drush.
+  $per_user_config_dir = drush_get_context('DRUSH_PER_USER_CONFIGURATION');
+  if (!empty($per_user_config_dir)) {
+    $dirs[] = $per_user_config_dir;
+  }
+
+  foreach ($dirs as $dir) {
+    $include_files = array_merge($include_files, array_keys(drush_scan_directory($dir, '{^(.*\.)?drakefile.drush(' . DRUSH_MAJOR_VERSION . '|)rc.php$}')));
+  }
 
   $file = drush_get_option('file', NULL);
   if (!empty($file)) {
@@ -86,8 +103,7 @@ function drush_drake($target = '') {
       // Check that the file exists.
       return drush_set_error('MISSING_FILE', dt('File @file not found.', array('@file' => $file)));
     }
-    // Override files.
-    $files = array($file);
+    $files[] = $file;
   }
   else {
     // Else look around.
@@ -108,9 +124,13 @@ function drush_drake($target = '') {
     }
   }
 
-  if (empty($files)) {
+  // Bail out if no non-include files and no target was specified, or there's no
+  // drakefiles at all.
+  if (empty($files) && (empty($target) || empty($include_files))) {
     return drush_set_error('NO_DRAKEFILE_FILE', dt('No drakefile.php files found or specified'));
   }
+
+  $files = array_merge($include_files, $files);
 
   $files = array_reverse($files);
   // @todo make this a separate command?

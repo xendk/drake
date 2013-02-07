@@ -97,7 +97,42 @@ class DrakeCase extends Drush_CommandTestCase {
     $this->drush('drake', array('site'));
     // Check output.
     $this->assertRegExp('/Site drakefile\./', $this->getOutput());
+
+    // Test that a drakefile in users home dir is loaded.
+    copy(dirname(__FILE__) . '/user.drakefile.php', getenv('HOME') . '/.drush/user.drakefile.drushrc.php');
+    $this->drush('drake', array('user'));
+    // Check output.
+    $this->assertRegExp('/User drakefile\./', $this->getOutput());
+    unlink(getenv('HOME') . '/.drush/user.drakefile.drushrc.php');
+
+    // Test that user drakefiles also work in subdirs.
+    mkdir(getenv('HOME') . '/.drush/test');
+    copy(dirname(__FILE__) . '/user.drakefile.php', getenv('HOME') . '/.drush/test/user.drakefile.drushrc.php');
+    $this->drush('drake', array('user'));
+    // Check output.
+    $this->assertRegExp('/User drakefile\./', $this->getOutput());
+
+    // Take the site drakefile out of the equation.
+    unlink($this->webroot() . '/sites/all/drush/drakefile.php');
+    // No target should hit the drakefile in the current dir.
+    $this->drush('drake');
+    $this->assertRegExp('/Simple drakefile\./', $this->getOutput());
+
+    // Remove the drakefile in the current dir. Now only the user drakefile is
+    // left.
     unlink('./drakefile.php');
+    // No target  should give an error, even when there's user drakefiles.
+    $this->drush('drake 2>&1', array(), array(), NULL, NULL, self::EXIT_ERROR);
+    // Check error message.
+    $this->assertRegExp('/No drakefile.php files found or specified/', $this->getOutput());
+
+    // But specific targets should work.
+    $this->drush('drake', array('user'));
+    // Check output.
+    $this->assertRegExp('/User drakefile\./', $this->getOutput());
+
+    unlink(getenv('HOME') . '/.drush/test/user.drakefile.drushrc.php');
+    rmdir(getenv('HOME') . '/.drush/test');
   }
 
   function testContexts() {
