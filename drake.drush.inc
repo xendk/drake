@@ -334,8 +334,14 @@ function drush_drake_process($target) {
   }
 
   if (!empty($drake['files'])) {
+    $realpaths = array();
     // Load the drakefiles to define the functions they contain.
     foreach ($drake['files'] as $file) {
+      $realpath = realpath($file);
+      if (isset($realpaths[$realpath])) {
+        continue;
+      }
+      $realpaths[$realpath] = TRUE;
       // @todo investigate whether this is the most kosher way to include file.
       require $file;
     }
