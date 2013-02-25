@@ -29,17 +29,20 @@ class DrakeFilesPlaceholder implements DrakePlaceholder {
     $files = array_keys(drush_scan_directory($this->root, '/.*/'));
 
     $matched_files = array();
+    $length = strlen(rtrim($this->root, '/')) + 1;
     foreach ($files as $file) {
+      $file_path = substr($file, $length);
+      $file_path = $file;
       foreach ($includes as $include) {
-        if (preg_match($include, $file)) {
+        if (preg_match($include, $file_path)) {
           // File is included, check if it's excluded.
           foreach ($excludes as $exclude) {
-            if (preg_match($exclude, $file)) {
+            if (preg_match($exclude, $file_path)) {
               // Break out two loops.
               continue 2;
             }
           }
-          $matched_files[] = $file;
+          $matched_files[] = $file_path;
         }
       }
     }
@@ -50,13 +53,13 @@ class DrakeFilesPlaceholder implements DrakePlaceholder {
     // RegExp escaping: an extreme sport..
     $from = array(
       '/\\\\\\?/',
-      '/\\\\\\*/',
       '/\\\\\\*\\\\\\*/',
+      '/\\\\\\*/',
     );
     $to = array(
       '.',
-      '[^/]*',
       '.*',
+      '[^/]*',
     );
 
     $preg_patterns = array();
