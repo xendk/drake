@@ -324,6 +324,7 @@ function drush_drake($target = '') {
       // Make, situs and other build tools might pull the rug out from under our
       // feet. Reenter the directory in case someone moved a new version in.
       chdir($dir);
+
       if ($result['error_status'] !== 0) {
         // We assume that _drake_run_task already output a message.
         return FALSE;
