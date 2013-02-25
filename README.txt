@@ -61,6 +61,48 @@ With the above drakefile.php, running drush drake with no arguments
 will run the tasks depended on by the default task before running the
 default task itself.
 
+Actions
+=======
+
+Custom actions can be defined in $actions of a drakefile. The simplest
+case looks like this:
+
+<?php
+
+$actions['my-action'] = array(
+  'callback' => 'action_callback',
+);
+function action_callback($context) {
+  // Do something.
+}
+
+?>
+
+The context passed to action callbacks is the task being run. An
+action can define what task properties it requires or uses by
+populating the parameters key in $actions (see drush.actions.inc for
+examples).
+
+Drake has the following default actions:
+
+'shell':
+  Execute shell commands, parameters:
+  'command': the command to run.
+  'args':    command arguments, optional. 
+
+'drush':
+  Execute drush commands, parameters:
+  'command': the command to run.
+  'args':    command arguments, optional.
+  'target':  Drush alias to run the command on, defaults to @self.
+
+'drake':
+  Run drake, parameters:
+  'file':    drakefile to use.
+  'dir':     Directory to run in, optional.
+  'task':    Task to run, optional.
+  'target':  Drush alias to run the command on, defaults to @self.
+
 Contexts
 ========
 
