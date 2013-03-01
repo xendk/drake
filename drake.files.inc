@@ -9,15 +9,37 @@ function files($root, $includes = array(), $excludes = array()) {
   return new DrakeFilesPlaceholder($root, $includes, $excludes);
 }
 
+class DrakeFile {
+  protected $root;
+  protected $file_path;
+
+  function __construct(DrakeFilesPlaceholder $root, $path) {
+    $this->root = $root;
+    $this->file_path = $path;
+  }
+
+  function __toString() {
+    return $this->root->root() . '/' . $this->file_path;
+  }
+
+  function path() {
+    return $this->file_path;
+  }
+}
+
 class DrakeFilesPlaceholder implements DrakePlaceholder {
   protected $root;
   protected $includes;
   protected $excludes;
 
   function __construct($root, $includes, $excludes) {
-    $this->root = $root;
+    $this->root = rtrim($root, '/');
     $this->includes = $includes;
     $this->excludes = $excludes;
+  }
+
+  function root() {
+    return $this->root;
   }
 
   function resolve(DrakeContext $context) {
@@ -29,10 +51,10 @@ class DrakeFilesPlaceholder implements DrakePlaceholder {
     $files = array_keys(drush_scan_directory($this->root, '/.*/'));
 
     $matched_files = array();
-    $length = strlen(rtrim($this->root, '/')) + 1;
+    $length = strlen($this->root) + 1;
     foreach ($files as $file) {
       $file_path = substr($file, $length);
-      $file_path = $file;
+      // $file_path = $file;
       foreach ($includes as $include) {
         if (preg_match($include, $file_path)) {
           // File is included, check if it's excluded.
@@ -42,7 +64,7 @@ class DrakeFilesPlaceholder implements DrakePlaceholder {
               continue 2;
             }
           }
-          $matched_files[] = $file_path;
+          $matched_files[] = new DrakeFile($this, $file_path);
         }
       }
     }

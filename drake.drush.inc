@@ -323,7 +323,7 @@ function drush_drake() {
       $command_options = drush_redispatch_get_options();
       // $command_options['yes'] = TRUE;
       $command_options['drake'] = array(
-        'task' => $task,
+        'task' => serialize($task),
         'files' => $files,
       );
       $result = drush_invoke_process('@self', 'drake-process', array($task['name']), $command_options, $backend_options);
@@ -357,9 +357,10 @@ function drush_drake() {
 function drush_drake_process($target) {
   $drake = drush_get_option('drake', NULL);
 
-  if (empty($drake['task'])) {
+  if (empty($drake)) {
     return drush_set_error('NO_TASK', dt('Task not specified for drake-process.'));
   }
+  $drake['task'] = unserialize($drake['task']);
 
   if (!empty($drake['files'])) {
     $realpaths = array();
