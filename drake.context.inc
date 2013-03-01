@@ -178,7 +178,7 @@ class DrakeContextPlaceholderSiteOp {
   public function getPath() {
     $record = $this->record();
     if (!empty($record['root']) && $path = drush_sitealias_local_site_path($record)) {
-      return $path;
+      return preg_replace('/^' . preg_quote($record['root'] . '/', '/') . '/', '', $path);
     }
     throw new DrakeContextException(dt('No site path found for "@site"', array('@site' => $this->site)));
   }
