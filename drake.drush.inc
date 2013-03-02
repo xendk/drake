@@ -64,11 +64,37 @@ function drake_drush_help($section) {
  *
  * Executes the main drake command.
  */
-function drush_drake($target = '') {
+function drush_drake() {
   // Drake files to include.
   $include_files = array();
   // Drake files to load.
   $files = array();
+
+  $target = NULL;
+  // Sort out arguments and find a target, if specified.
+  $arguments = func_get_args();
+  $global_context = new DrakeContext();
+  $i = 1;
+  $first_argument = TRUE;
+  // Create context from command line arguments.
+  foreach ($arguments as $argument) {
+    // If the argument contains an =, it's a key=value argument.
+    $arg = preg_split('/(?<!\\\)=/', $argument, 2);
+    if (!isset($arg[1])) {
+      // Skip the first argument. We assume
+      if (!$target) {
+        $target = $arg[0];
+      } else {
+        // If no = was found, name it sequentially.
+        $arg[1] = $arg[0];
+        $arg[0] = 'arg' . $i;
+        $first_argument = FALSE;
+      }
+    }
+    // Remove = escaping.
+    $arg = preg_replace('/\\\=/', '=', $arg);
+    $global_context->force($arg[0], $arg[1]);
+  }
 
   // Include common system wide drakefiles and drakefiles in .drush.
   $dirs = array();
@@ -142,28 +168,8 @@ function drush_drake($target = '') {
     return;
   }
 
-  $arguments = func_get_args();
-  // Loose the target.
-  array_shift($arguments);
-
   $tasks = array();
   $actions = drake_standard_actions();
-
-  $global_context = new DrakeContext();
-  $i = 1;
-  // Create context from command line arguments.
-  foreach ($arguments as $argument) {
-    // If the argument contains an =, it's a key=value argument.
-    $arg = preg_split('/(?<!\\\)=/', $argument, 2);
-    if (!isset($arg[1])) {
-      // If no = was found, name it sequentially.
-      $arg[1] = $arg[0];
-      $arg[0] = 'arg' . $i;
-    }
-    // Remove = escaping.
-    $arg = preg_replace('/\\\=/', '=', $arg);
-    $global_context->force($arg[0], $arg[1]);
-  }
 
   // Set up global context.
   $self_record = drush_sitealias_get_record('@self');

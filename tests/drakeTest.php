@@ -184,6 +184,11 @@ class DrakeCase extends Drush_CommandTestCase {
     // Check output.
     $this->assertRegExp('/override-context: Context is set with value: new-value/', $this->getOutput());
 
+    // Ensure that the default tasks is run, even when we specify context.
+    $this->drush('drake', array('context1=new-value'));
+    // Check output.
+    $this->assertRegExp('/simple: new-value/', $this->getOutput());
+
     unlink('./drakefile.php');
   }
 
