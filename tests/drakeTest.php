@@ -16,6 +16,7 @@ class DrakeCase extends Drush_CommandTestCase {
     copy(dirname(dirname(__FILE__)) . '/drake.drush.inc', getenv('HOME') . '/.drush/drake.drush.inc');
     copy(dirname(dirname(__FILE__)) . '/drake.actions.inc', getenv('HOME') . '/.drush/drake.actions.inc');
     copy(dirname(dirname(__FILE__)) . '/drake.context.inc', getenv('HOME') . '/.drush/drake.context.inc');
+    copy(dirname(dirname(__FILE__)) . '/drake.files.inc', getenv('HOME') . '/.drush/drake.context.inc');
   }
 
   public function setUp() {
