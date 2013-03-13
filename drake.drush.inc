@@ -319,8 +319,8 @@ function drush_drake() {
       $task['#context']->resolve($task);
       drush_log(_drake_task_message($task) . $message_suffix, 'status');
 
-      // We need drush_invoke_process to use post for redispatching, as using get
-      // will loose our drake command option (as it is an array).
+      // We need drush_invoke_process to use post for redispatching, as using
+      // get will loose our drake command option (as it is an array).
       $backend_options = array(
         'method' => 'POST',
         '#output-label' => $task['name'] . ': ',
