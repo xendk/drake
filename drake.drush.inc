@@ -443,6 +443,9 @@ function _drake_task_message($task) {
     }
     return $message;
   }
+  elseif (!empty($task['action']['default_message'])) {
+    return $task['action']['default_message'];
+  }
   else {
     return dt('Doing "@task_name" task', array('@task_name' => $task['name']));
   }
