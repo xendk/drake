@@ -202,6 +202,11 @@ function drush_drake() {
     if (!empty($res['actions'])) {
       $actions = array_merge($actions, $res['actions']);
     }
+    if (!empty($res['filesets'])) {
+      foreach ($res['filesets'] as $name => $def) {
+        fileset_create($name, $def);
+      }
+    }
   }
 
   // Add array key as name in sub-arrays..
@@ -410,6 +415,12 @@ function _drake_load_file($_drake_file, $_drake_context) {
       $action['#context'] = $_drake_context;
     }
     $return['actions'] = $actions;
+  }
+  if (!empty($filesets)) {
+    foreach ($filesets as &$fileset) {
+      $fileset['#context'] = $_drake_context;
+    }
+    $return['filesets'] = $filesets;
   }
   if (!empty($context)) {
     foreach($context as $key => $value) {

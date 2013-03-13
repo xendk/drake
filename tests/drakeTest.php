@@ -16,7 +16,7 @@ class DrakeCase extends Drush_CommandTestCase {
     copy(dirname(dirname(__FILE__)) . '/drake.drush.inc', getenv('HOME') . '/.drush/drake.drush.inc');
     copy(dirname(dirname(__FILE__)) . '/drake.actions.inc', getenv('HOME') . '/.drush/drake.actions.inc');
     copy(dirname(dirname(__FILE__)) . '/drake.context.inc', getenv('HOME') . '/.drush/drake.context.inc');
-    copy(dirname(dirname(__FILE__)) . '/drake.files.inc', getenv('HOME') . '/.drush/drake.context.inc');
+    copy(dirname(dirname(__FILE__)) . '/drake.files.inc', getenv('HOME') . '/.drush/drake.files.inc');
   }
 
   public function setUp() {
@@ -297,6 +297,70 @@ class DrakeCase extends Drush_CommandTestCase {
     // Check for shell command output.
     $this->assertRegExp('/Marvin/', $this->getOutput());
 
+  }
+
+  function testFilesets() {
+    // Use a Drupal install to test filesets.
+    $this->setUpDrupal(1);
+    chdir($this->webroot());
+
+    copy(dirname(__FILE__) . '/filesets.drakefile.php', './drakefile.php');
+
+    $this->drush('drake', array('field-modules', 'root=' . $this->webroot()));
+    // Check output.
+    $expected = "field-modules: modules/field/tests/field_test.module
+field-modules: modules/field/modules/number/number.module
+field-modules: modules/field/modules/field_sql_storage/field_sql_storage.module
+field-modules: modules/field/modules/text/text.module
+field-modules: modules/field/modules/options/options.module
+field-modules: modules/field/modules/list/tests/list_test.module
+field-modules: modules/field/modules/list/list.module";
+    $this->assertEquals($this->sortLines($expected), $this->sortLines($this->getOutput()));
+
+    $this->drush('drake', array('field-modules-less', 'root=' . $this->webroot()));
+    // Check output.
+    $expected = "field-modules-less: modules/field/tests/field_test.module
+field-modules-less: modules/field/modules/number/number.module
+field-modules-less: modules/field/modules/field_sql_storage/field_sql_storage.module
+field-modules-less: modules/field/modules/text/text.module";
+    $this->assertEquals($this->sortLines($expected), $this->sortLines($this->getOutput()));
+
+    $this->drush('drake', array('system-module', 'root=' . $this->webroot()));
+    // Check output.
+    $expected = "system-module: modules/system/system.module
+system-module: " . $this->webroot() . "/modules/system/system.module
+system-module: " . $this->webroot() . "/modules/system/system.module";
+    $this->assertEquals($expected, trim($this->getOutput()));
+
+    // Check that prefixing / anchors to the root.
+    copy($this->webroot() . '/includes/form.inc', $this->webroot() . '/form.inc');
+    $this->drush('drake', array('anchoring', 'root=' . $this->webroot()));
+    // Check output.
+    $expected = "anchoring: form.inc";
+    $this->assertEquals($this->sortLines($expected), $this->sortLines($this->getOutput()));
+
+    // Check that patterns are anchored to the end of the file.
+    $this->drush('drake', array('scripts', 'root=' . $this->webroot()));
+    // Check output.
+    $expected = "scripts: scripts/test.script
+scripts: modules/simpletest/files/javascript-2.script";
+    $this->assertEquals($this->sortLines($expected), $this->sortLines($this->getOutput()));
+
+    // Check slash matching.
+    $this->drush('drake', array('php-module', 'root=' . $this->webroot()));
+    // Check output.
+    $expected = "php-module: modules/php/php.test
+php-module: modules/php/php.module
+php-module: modules/php/php.info
+php-module: modules/php/php.install";
+    $this->assertEquals($this->sortLines($expected), $this->sortLines($this->getOutput()));
+
+  }
+
+  function sortLines($string) {
+    $tmp = explode("\n", trim($string));
+    sort($tmp);
+    return implode("\n", $tmp);
   }
 
 }
