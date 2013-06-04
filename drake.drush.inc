@@ -82,7 +82,7 @@ function drush_drake() {
     // If the argument contains an =, it's a key=value argument.
     $arg = preg_split('/(?<!\\\)=/', $argument, 2);
     if (!isset($arg[1])) {
-      // Skip the first argument. We assume
+      // Skip the first argument. We assume its the target.
       if (!$target) {
         $target = $arg[0];
       } else {
