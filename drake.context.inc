@@ -213,6 +213,25 @@ class DrakeContextPlaceholderStringOp {
   }
 }
 
+class DrakeContextPlaceholderFileOp {
+  protected $string;
+
+  public function __construct($value) {
+    $this->string = $value;
+  }
+  public function __toString() {
+    return $this->string;
+  }
+
+  public function getDirname() {
+    return dirname($this->string);
+  }
+
+  public function getBasename() {
+    return basename($this->string);
+  }
+}
+
 /**
  * An context exception class.
  */
