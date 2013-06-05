@@ -363,4 +363,17 @@ php-module: modules/php/php.install";
     return implode("\n", $tmp);
   }
 
+  function testRegressionRecursiveContext() {
+    copy(dirname(__FILE__) . '/regression_context.drakefile.php', './drakefile.php');
+
+    // Should fail with a 'context not set'.
+    $this->drush('drake 2>&1', array('recursive-undef'), array(), NULL, NULL, self::EXIT_ERROR);
+    // Check output.
+    $this->assertRegExp('/check-value: No such context "value"/', $this->getOutput());
+
+    // Should pick up the parent context value..
+    $this->drush('drake', array('recursive-def'));
+    // Check output.
+    $this->assertRegExp('/check-value: Context is set with value: recursive-value/', $this->getOutput());
+  }
 }

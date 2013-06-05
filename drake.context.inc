@@ -84,6 +84,12 @@ class DrakeContextPlaceholder implements DrakePlaceholder {
       foreach ($matches as $match) {
         $pipeline = explode(':', $match[1]);
         $value = $context[array_shift($pipeline)];
+        // Special handling for recursive contexts. Try to get a parent value
+        // that's not the same as the current context object.
+        if ($value instanceof DrakeContextPlaceholder &&
+          $value->name == $this->name) {
+          $value = $context->get_not($this->name, array($this));
+        }
         // In case context contains an context object.
         if ($value instanceof DrakeContextPlaceholder) {
           $value = $value->resolve($context);
@@ -286,6 +292,13 @@ class DrakeContext implements ArrayAccess {
   }
 
   /**
+   * Get offset, but ignore certain values.
+   */
+  function get_not($offset, $ignore = array()) {
+    return $this->offsetGet($offset, $ignore);
+  }
+
+  /**
    * Take an MD5 sum of this context.
    *
    * Gives a unique id for this context, depending on content.
@@ -328,8 +341,10 @@ class DrakeContext implements ArrayAccess {
   /**
    * Implements ArrayAccess::offsetGet().
    */
-  public function offsetGet($offset) {
-    if (isset($this->values[$offset]) || array_key_exists($offset, $this->values)) {
+  public function offsetGet($offset, $ignore = array()) {
+    if ((isset($this->values[$offset]) ||
+        array_key_exists($offset, $this->values)) &&
+      !in_array($this->values[$offset], $ignore)) {
       return $this->values[$offset];
     }
     else {
@@ -337,7 +352,7 @@ class DrakeContext implements ArrayAccess {
         // Check backwards as latter values takes priority.
         foreach (array_reverse($this->parents) as $parent) {
           try {
-            return $parent[$offset];
+            return $parent->offsetGet($offset, $ignore);
           }
           catch (DrakeContextNotFoundException $e) {
             // Do nothing, try the next parent.
