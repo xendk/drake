@@ -9,9 +9,9 @@ building tools, but with Drush Flavour (TM).
 Intro
 =====
 
-Drush Drake works sorta like make by having a drakefile.php file which
-tells it what to do. The drakefile.php may be in the current directory
-or in sites/all/drush of the current site.
+Drake works sorta like make by having a drakefile.php file which tells
+it what to do. The drakefile.php may be in the current directory or in
+sites/all/drush of the current site.
 
 A drakefile.php file looks a lot like a Drush aliases.drushrc.php
 file, and contains tasks and, optionally, actions, in the variables
@@ -19,19 +19,19 @@ $tasks and $actions, respectively.
 
 An action is the implementation of something to do, such as syncing a
 database or running a Drush command. At the moment the selection is
-rather bare, but an healthy selection of standard things you might want
-to do with a Drupal site is planned.
+rather bare, but an healthy selection of standard things you might
+want to do with a Drupal site is planned.
 
 Tasks specify which actions you want to run, how, and in which
 order. Tasks is much like the targets of traditional make(1), as
 they're the main thing you'll be using on a daily basis.
 
-When invoking Drush Drake without any arguments, it will run the first
+When invoking Drake without any arguments, it will run the first
 task found in the file. Providing the name of a task will run that
 specific task.
 
 A task can be dependent on other tasks by using the 'depends' key,
-which will make Drush Drake run the depended upon tasks before running
+which will make Drake run the depended upon tasks before running
 the given task.
 
 An example:
@@ -60,6 +60,23 @@ $tasks['second-task'] = array(
 With the above drakefile.php, running drush drake with no arguments
 will run the tasks depended on by the default task before running the
 default task itself.
+
+Drake file discovery
+====================
+
+If no --file argument is specified, Drake attempts to find a drakefile
+by looking in the following places:
+
+When run in a Drupal install: sites/all/drush/drakefile.php
+
+A drakefile.php in the current directory.
+
+When run in a Drupal install: A drakefile.php in any profile in
+the profiles folder (but only if just one is found in all profiles).
+
+In any case, any *.drakefile.drushrc.php files found in any directory
+in the users .drush folder is included before loading the main
+drakefile.php, but no default tasks is run in those.
 
 Actions
 =======
@@ -132,8 +149,8 @@ the file context of the file that contained the echo-task would be
 checked (these can be defined by having a $context variable in the
 drakefile), before checking the global context.
 
-Drush Drake sets the context @self to the name of the alias of the
-current site (if any).
+Drake sets the context @self to the name of the alias of the current
+site (if any).
 
 Contexts may also specify an format for the string, for example:
 
