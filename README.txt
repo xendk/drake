@@ -155,6 +155,44 @@ property will be removed if the context is not available. For example:
 
 Will remove the `args` key if the context was not found.
 
+Context Ops
+-----------
+
+As static strings is somewhat limited in their usage, contexts (and
+arguments, more on those later) supports working with the context
+value by using "ops". A practical example:
+
+  'path' => context('[@prod:site:root]'),
+
+This will set the path context to the root path of the @prod
+alias. Ops works from left to right, in the above case starting with
+the @prod context, converting it to a site op, which we can then ask
+for the root of the site. Most ops evaluate to the original string
+they were based on, so "[@prod:site]" is basically the same as
+"[@prod]", but the next op allows for further refinement.
+
+Another example:
+
+  'path' => context('[@prod:site:root:file:dirname]'),
+
+Gets the parent directory name of the site root.
+
+Defined Ops
+-----------
+The currently defined ops are:
+
+site:         The original string is taken as a site alias.
+  root:       The root of the Drupal installation.
+  path:       The path within the root for the site.
+
+string:       Misc string functions.
+  upcase:     Convert string to uppercase.
+  downcase:   Convert string to lowercase.
+
+file:         Takes a filename.
+  dirname:    Parent directory name of the file.
+  basename:   Filename without the directory name.
+
 Arguments
 =========
 
