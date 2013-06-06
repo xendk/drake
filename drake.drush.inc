@@ -141,6 +141,8 @@ function drush_drake() {
       if (file_exists($site_all)) {
         $files[] = $site_all;
       }
+      // @todo: consider to load sites/<site>/drakefile.php. Check out what
+      //   _drush_config_file does.
     }
     // Check current directory if alias was not defined on the command line.
     if (!drush_get_context('DRUSH_TARGET_SITE_ALIAS')) {
@@ -149,12 +151,27 @@ function drush_drake() {
         $files[] = 'drakefile.php';
       }
     }
+    // If the above two didn't find anything, make a last ditch effort of
+    // looking in the site profiles.
+    if (empty($files) && !empty($drupal_root)) {
+      $profiles = array_keys(drush_scan_directory($drupal_root . '/profiles', '{.*}', array('.', '..', 'CVS'), 0, FALSE));
+      foreach ($profiles as $profile) {
+        $drakefile = $profile . '/drakefile.php';
+        if (file_exists($drakefile)) {
+          $files[] = $drakefile;
+        }
+      }
+      // Error out if there's more than one candidate.
+      if (sizeof($files) > 1) {
+        return drush_set_error('MULTIPLE_DRAKEFILES', dt('Multiple profile drakefile.phps found, please use --file to specify which to use.'));
+      }
+    }
   }
 
   // Bail out if no non-include files and no target was specified, or there's no
   // drakefiles at all.
   if (empty($files) && (empty($target) || empty($include_files))) {
-    return drush_set_error('NO_DRAKEFILE_FILE', dt('No drakefile.php files found or specified'));
+    return drush_set_error('NO_DRAKEFILE_FILE', dt('No drakefile.php files found or specified.'));
   }
 
   $files = array_merge($include_files, $files);

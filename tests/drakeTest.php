@@ -70,6 +70,12 @@ class DrakeCase extends Drush_CommandTestCase {
     copy(dirname(__FILE__) . '/site.drakefile.php',
       $this->webroot() . '/sites/all/drush/drakefile.php');
 
+    $x = $this->webroot();
+    $this->log(`ls $x`);
+    // Create a profile drakefile. This should not interfere with any of the
+    // discoveries below. We'll test that it works later.
+    copy(dirname(__FILE__) . '/profile.drakefile.php', $this->webroot() . '/profiles/standard/drakefile.php');
+
     $this->drush('@dev drake');
     // Check output.
     $this->assertRegExp('/Site drakefile\./', $this->getOutput());
@@ -119,9 +125,25 @@ class DrakeCase extends Drush_CommandTestCase {
     $this->drush('drake');
     $this->assertRegExp('/Simple drakefile\./', $this->getOutput());
 
-    // Remove the drakefile in the current dir. Now only the user drakefile is
-    // left.
+    // Remove the drakefile in the current dir. Now only the profile and user
+    // drakefile is left.
     unlink('./drakefile.php');
+
+    // We should hit the profile drakefile now.
+    $this->drush('drake');
+    $this->assertRegExp('/Profile drakefile\./', $this->getOutput());
+
+    // Copy in another profile drakefile.
+    copy(dirname(__FILE__) . '/profile.drakefile.php', $this->webroot() . '/profiles/minimal/drakefile.php');
+
+    $this->drush('drake 2>&1', array(), array(), NULL, NULL, self::EXIT_ERROR);
+    // Check error message.
+    $this->assertRegExp('/Multiple profile drakefile.phps found/', $this->getOutput());
+
+    // Remove the profile drakefiles. Now only the user drakefile is left.
+    unlink($this->webroot() . '/profiles/minimal/drakefile.php');
+    unlink($this->webroot() . '/profiles/standard/drakefile.php');
+
     // No target  should give an error, even when there's user drakefiles.
     $this->drush('drake 2>&1', array(), array(), NULL, NULL, self::EXIT_ERROR);
     // Check error message.
