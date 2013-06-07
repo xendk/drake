@@ -398,4 +398,14 @@ php-module: modules/php/php.install";
     // Check output.
     $this->assertRegExp('/check-value: Context is set with value: recursive-value/', $this->getOutput());
   }
+
+  function testRegressionMultipleArguments() {
+    copy(dirname(__FILE__) . '/regression_arguments.drakefile.php', './drakefile.php');
+
+    // Should print both arguments..
+    $this->drush('drake', array('multiple', 'testvalue1', 'testvalue2'));
+    // Check output.
+    $this->assertRegExp('/multiple: Context is set with value: testvalue1/', $this->getOutput());
+    $this->assertRegExp('/multiple: Context is set with value: testvalue2/', $this->getOutput());
+  }
 }

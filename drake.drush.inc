@@ -88,7 +88,7 @@ function drush_drake() {
       } else {
         // If no = was found, name it sequentially.
         $arg[1] = $arg[0];
-        $arg[0] = 'arg' . $i;
+        $arg[0] = 'arg' . $i++;
         $first_argument = FALSE;
       }
     }
