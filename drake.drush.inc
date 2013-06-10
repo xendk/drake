@@ -420,6 +420,17 @@ function _drake_load_file($_drake_file, $_drake_context) {
     return drush_set_error('BAD_API', dt("No api version in file. Add in \$api = 1;"));
   }
 
+  // Catch common typos.
+  if (isset($task)) {
+    drush_log(dt('Variable named $task found in @file, did you mean $tasks?', array('@file' => $_drake_file)), 'warning');
+  }
+  if (isset($action)) {
+    drush_log(dt('Variable named $action found in @file, did you mean $actions?', array('@file' => $_drake_file)), 'warning');
+  }
+  if (isset($contexts)) {
+    drush_log(dt('Variable named $contexts found in @file, did you mean $context?', array('@file' => $_drake_file)), 'warning');
+  }
+
   $return = array();
   if (!empty($tasks)) {
     foreach ($tasks as &$task) {
