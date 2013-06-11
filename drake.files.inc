@@ -152,11 +152,11 @@ class DrakeFileset extends DrakeFilesPlaceholder {
       $this->root = $def['dir'];
     }
 
-    if (is_array($def['include'])) {
+    if (isset($def['include']) && is_array($def['include'])) {
       $this->includes = $def['include'];
     }
 
-    if (is_array($def['exclude'])) {
+    if (isset($def['exclude']) && is_array($def['exclude'])) {
       $this->excludes = $def['exclude'];
     }
 

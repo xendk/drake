@@ -117,7 +117,7 @@ function drush_drake() {
   if (!empty($file)) {
     // A file was specified, use that.
     $url = parse_url($file);
-    if ($url['scheme']) {
+    if (!empty($url['scheme'])) {
       // Remote file, save it to a temp file so we can include it.
       $data = file_get_contents($file);
       if ($data === FALSE) {
