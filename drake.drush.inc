@@ -85,6 +85,7 @@ function drush_drake() {
       // Skip the first argument. We assume its the target.
       if (!$target) {
         $target = $arg[0];
+        continue;
       } else {
         // If no = was found, name it sequentially.
         $arg[1] = $arg[0];
