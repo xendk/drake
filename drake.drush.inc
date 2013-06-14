@@ -335,7 +335,9 @@ function drush_drake() {
       }
       // Message callbacks might use context, so resolve that first.
       $task['#context']->resolve($task);
-      drush_log(_drake_task_message($task) . $message_suffix, 'status');
+      foreach (_drake_task_messages($task, $message_suffix) as $message) {
+        drush_log($message . "\n", 'status');
+      }
 
       // We need drush_invoke_process to use post for redispatching, as using
       // get will loose our drake command option (as it is an array).
@@ -462,7 +464,13 @@ function _drake_load_file($_drake_file, $_drake_context) {
 /**
  * Return the message for the task.
  */
-function _drake_task_message($task) {
+function _drake_task_messages($task, $suffix = '') {
+  static $printed_parents = array();
+  $return = array();
+  if (!empty($task['#parent']['depends']) && !isset($printed_parents[$task['#parent']['name']])) {
+    $return = _drake_task_messages($task['#parent']);
+    $printed_parents[$task['#parent']['name']] = TRUE;
+  }
   if (!empty($task['message'])) {
     $message = $task['message'];
     if (is_array($message) && function_exists($message[0])) {
@@ -470,14 +478,20 @@ function _drake_task_message($task) {
       $message[0] = $task;
       $message = trim(call_user_func_array($function, $message));
     }
-    return $message;
+    $return[] = $message . $suffix;
   }
   elseif (!empty($task['action']['default_message'])) {
-    return $task['action']['default_message'];
+    $return[] = $task['action']['default_message'] . $suffix;
   }
   else {
-    return dt('Doing "@task_name" task', array('@task_name' => $task['name']));
+    if (!isset($printed_parents[$task['name']]) || !empty($task['action'])) {
+      $return[] = dt('Doing "@task_name" task @suffix', array('@task_name' => $task['name'], '@suffix' => $suffix));
+    }
+    else {
+      $return[] = dt('Finished "@task_name".', array('@task_name' => $task['name']));
+    }
   }
+  return $return;
 }
 
 /**
@@ -628,6 +642,7 @@ function _drake_visit(&$task, &$resolution, &$all_tasks, &$seen, $stack) {
         }
         // Let context follow dependencies.
         $dependency = $all_tasks[$dependency_name];
+        $dependency['#parent'] = $task;
         $dependency['#context'] = new DrakeContext(array($dependency['#context'], $context));
         $res = _drake_visit($dependency, $resolution, $all_tasks, $seen, array_merge($stack, array($task['name'])));
         if (!$res) {
