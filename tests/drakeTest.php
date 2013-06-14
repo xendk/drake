@@ -212,6 +212,31 @@ class DrakeCase extends Drush_CommandTestCase {
     // Check output.
     $this->assertRegExp('/simple: new-value/', $this->getOutput());
 
+    // Tests that context works in dependency, when given on the same task.
+    $this->drush('drake', array('context-dependency'));
+    // Check output.
+    $this->assertRegExp('/sub1 run/', $this->getOutput());
+
+    // Ensure that a missing context in dependencies gives a proper error.
+    $this->drush('drake 2>&1', array('context-dependency2'), array(), NULL, NULL, self::EXIT_ERROR);
+    // Check output.
+    $this->assertRegExp('/In context-dependency2 dependencies: No such context "sub"/', $this->getOutput());
+
+    // Tests that context works in dependency
+    $this->drush('drake', array('context-dependency2', 'sub=sub1'));
+    // Check output.
+    $this->assertRegExp('/sub1 run/', $this->getOutput());
+
+    // Tests that context works in dependency, again
+    $this->drush('drake', array('context-dependency2', 'sub=sub2'));
+    // Check output.
+    $this->assertRegExp('/sub2 run/', $this->getOutput());
+
+    // Test that unknown tasks after context resolving errors properly.
+    $this->drush('drake 2>&1', array('context-dependency2', 'sub=sub3'), array(), NULL, NULL, self::EXIT_ERROR);
+    // Check output.
+    $this->assertRegExp('/Unknown task context-dependency-sub3/', $this->getOutput());
+
     unlink('./drakefile.php');
   }
 

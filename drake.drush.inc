@@ -607,6 +607,15 @@ function _drake_visit(&$task, &$resolution, &$all_tasks, &$seen, $stack) {
       $task['#context'] = $context;
     }
     if (!empty($task['depends'])) {
+      // Resolve contexts in dependencies.
+      try {
+        $task['#context']->resolve($task['depends']);
+      }
+      catch (DrakeContextException $e) {
+        drush_set_error('CONTEXT_MISSING', dt('In @task dependencies: @message', array('@task' => $task['name'], '@message' => $e->getMessage())));
+        return FALSE;
+      }
+
       foreach ($task['depends'] as $dependency_name) {
         // Circular detection.
         if (in_array($dependency_name, $stack)) {
