@@ -290,22 +290,19 @@ class DrakeContext implements ArrayAccess {
    *   The array to replace placeholders in.
    */
   function resolve(&$array) {
-    array_walk_recursive($array, array($this, 'resolve_value'));
-  }
-
-  /**
-   * Possibly resolve a single context value.
-   *
-   * Helper method for DrakeContext::resolve().
-   * If the given value is not a context placeholder, nothing is done.
-   */
-  function resolve_value(&$value) {
-    // Using while, as the value might also be a placeholder.
-    while ($value instanceof DrakePlaceholder) {
-      $value = $value->resolve($this);
-      // If placeholder returned null, remove the value.
-      if (is_null($value)) {
-        unset($value);
+    foreach ($array as $key => &$value) {
+      if (is_array($value)) {
+        $this->resolve($value);
+      }
+      else {
+        // Using while, as the value might also be a placeholder.
+        while ($value instanceof DrakePlaceholder) {
+          $value = $value->resolve($this);
+          // If placeholder returned null, remove the value.
+          if (is_null($value)) {
+            unset($array[$key]);
+          }
+        }
       }
     }
   }

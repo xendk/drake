@@ -433,4 +433,28 @@ php-module: modules/php/php.install";
     $this->assertRegExp('/multiple: Context is set with value: testvalue1/', $this->getOutput());
     $this->assertRegExp('/multiple: Context is set with value: testvalue2/', $this->getOutput());
   }
+
+  function testRegressionActionDefaultArguments() {
+    copy(dirname(__FILE__) . '/regression_action_arguments.drakefile.php', './drakefile.php');
+
+    // Should print the set parametera.
+    $this->drush('drake', array('optional-set'));
+    // Check output.
+    $this->assertRegExp('/optional-set: Optional has the value set_value./', $this->getOutput());
+
+    // Should print default value.
+    $this->drush('drake', array('optional-unset'));
+    // Check output.
+    $this->assertRegExp('/optional-unset: Optional has the value default_value./', $this->getOutput());
+
+    // Without a context value, is should print default value.
+    $this->drush('drake', array('optional-context'));
+    // Check output.
+    $this->assertRegExp('/optional-context: Optional has the value default_value./', $this->getOutput());
+
+    // With a context value, it should print the context value.
+    $this->drush('drake', array('optional-context', 'optional_context=test'));
+    // Check output.
+    $this->assertRegExp('/optional-context: Optional has the value test./', $this->getOutput());
+}
 }

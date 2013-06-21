@@ -295,11 +295,18 @@ function drush_drake() {
   }
 
   // Check that we can run the given tasks.
-  foreach ($run_tasks as &$task) {
-    if (!_drake_prepare_task($task, $actions)) {
-      return FALSE;
+  try {
+    foreach ($run_tasks as &$task) {
+      if (!_drake_prepare_task($task, $actions)) {
+        return FALSE;
+      }
     }
   }
+  catch (DrakeContextException $e) {
+    drush_set_error('CONTEXT_MISSING', dt('Task @task: @message', array('@task' => $task['name'], '@message' => $e->getMessage())));
+    return FALSE;
+  }
+
   // Unset reference, else the following foreach loop will munge the last task.
   unset($task);
 
@@ -333,8 +340,7 @@ function drush_drake() {
       if (!empty($task['action'])) {
         $message_suffix = ' [' . $task_num++ . '/' . $total_tasks . ']';
       }
-      // Message callbacks might use context, so resolve that first.
-      $task['#context']->resolve($task);
+
       foreach (_drake_task_messages($task, $message_suffix) as $message) {
         drush_log($message . "\n", 'status');
       }
@@ -364,10 +370,6 @@ function drush_drake() {
       if (!empty($task['action'])) {
         drush_log("Done\n", 'ok');
       }
-    }
-    catch (DrakeContextException $e) {
-      drush_set_error('CONTEXT_MISSING', dt('Task @task: @message', array('@task' => $task['name'], '@message' => $e->getMessage())));
-      return FALSE;
     }
     catch (Exception $e) {
       drush_set_error('EXCEPTION_CAUGHT', dt('Task @task threw exception: @message', array('@task' => $task['name'], '@message' => $e->getMessage())));
@@ -501,6 +503,10 @@ function _drake_task_messages($task, $suffix = '') {
  * action parameters.
  */
 function _drake_prepare_task(&$task, &$actions) {
+  // Resolve contexts. Doing it now allows us to have optional contexts for
+  // optional parameters, which will proporly default the parameter when the
+  // context is unset.
+  $task['#context']->resolve($task);
   if (!empty($task['action'])) {
     if (!isset($actions[$task['action']])) {
       return drush_set_error("UNKNOWN_ACTION", dt('Unknown action "@action".', array('@action' => $task['action'])));
@@ -518,6 +524,7 @@ function _drake_prepare_task(&$task, &$actions) {
       'multiple' => '',
       'parameters' => array(),
     );
+
     // Compile default parameters.
     $action_defaults = array();
     foreach ($action['parameters'] as $param_name => $param_settings) {
