@@ -73,7 +73,7 @@ function drake_standard_actions() {
  * unrecoverable error.
  *
  * It provides context to the error message about which action failed, and
- * ensures * a common format to error messages.
+ * ensures a common format to error messages.
  */
 function drake_action_error($message) {
   $context = &drush_get_context('DRAKE_RUN');
