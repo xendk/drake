@@ -64,7 +64,13 @@ class DrakeFilesPlaceholder implements DrakePlaceholder {
   }
 
   function resolve(DrakeContext $context) {
-    $includes = $this->pregify($this->includes);
+    if (!empty($this->includes)) {
+      $includes = $this->pregify($this->includes);
+    }
+    else {
+      // Default to all files.
+      $includes = $this->pregify(array('**'));
+    }
     $excludes = $this->pregify($this->excludes);
 
     if ($this->root instanceOf DrakePlaceholder) {
