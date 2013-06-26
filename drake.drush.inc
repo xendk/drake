@@ -303,7 +303,7 @@ function drush_drake() {
     }
   }
   catch (DrakeContextException $e) {
-    drush_set_error('CONTEXT_MISSING', dt('Task @task: @message', array('@task' => $task['name'], '@message' => $e->getMessage())));
+    drush_set_error('CONTEXT_EXCEPTION', dt('Task @task: @message', array('@task' => $task['name'], '@message' => $e->getMessage())));
     return FALSE;
   }
 

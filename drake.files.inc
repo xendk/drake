@@ -23,7 +23,7 @@ function fileset_get($name) {
   if (isset($filesets[$name])) {
     return $filesets[$name];
   }
-  throw new Exception(dt('Unknown fileset "@name".', array('@name' => $name)));
+  throw new DrakeContextException(dt('Unknown fileset "@name".', array('@name' => $name)));
 }
 
 class DrakeFile {
@@ -148,6 +148,8 @@ class DrakeFileset extends DrakeFilesPlaceholder {
   protected $resolved = FALSE;
 
   function __construct($name, $def) {
+    $this->name = $name;
+
     if (!empty($def['dir'])) {
       $this->root = $def['dir'];
     }
@@ -168,7 +170,7 @@ class DrakeFileset extends DrakeFilesPlaceholder {
   function resolve(DrakeContext $context) {
     if (!$this->resolved) {
       if (empty($this->root)) {
-        throw new Exception(dt('No fileset directory specified for @name', array('@name' => $this->name)));
+        throw new DrakeContextException(dt('No directory specified for fileset @name', array('@name' => $this->name)));
       }
       if (!empty($this->extend)) {
         // Merge in extended filesets includes and excludes.
