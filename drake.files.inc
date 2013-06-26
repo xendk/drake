@@ -23,6 +23,12 @@ function fileset_get($name) {
   if (isset($filesets[$name])) {
     return $filesets[$name];
   }
+  elseif (substr($name, 0, 3) == 'no-' && ($no_no_name = substr($name, 3)) && isset($filesets[$no_no_name])) {
+    // When the name starts with "no-" and we have a fileset named after the
+    // rest, take that and invert it.
+    $filesets[$name] = $filesets[$no_no_name]->invert($name);
+    return $filesets[$name];
+  }
   throw new DrakeContextException(dt('Unknown fileset "@name".', array('@name' => $name)));
 }
 
@@ -171,6 +177,33 @@ class DrakeFileset extends DrakeFilesPlaceholder {
     if (!empty($def['extend'])) {
       $this->extend = is_array($def['extend']) ? $def['extend'] : array($def['extend']);
     }
+  }
+
+  function invert($name) {
+    $def = array();
+    if (!empty($this->root)) {
+      $def['dir'] = $this->root;
+    }
+    if (!empty($this->includes)) {
+      $def['exclude'] = $this->includes;
+    }
+    if (!empty($this->excludes)) {
+      $def['include'] = $this->excludes;
+    }
+    // Invert extends by inverting each one.
+    $extend = array();
+    foreach ($this->extend as $extend_name) {
+      if (substr($extend_name, 0, 3) == 'no-') {
+        $extend[] = substr($extend_name, 3);
+      }
+      else {
+        $extend[] = 'no-' . $extend_name;
+      }
+    }
+    if (!empty($extend)) {
+      $def['extend'] = $extend;
+    }
+    return new DrakeFileset($name, $def);
   }
 
   function resolve(DrakeContext $context) {
