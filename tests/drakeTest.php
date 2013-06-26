@@ -119,6 +119,15 @@ class DrakeCase extends Drush_CommandTestCase {
     // Check output.
     $this->assertRegExp('/User drakefile\./', $this->getOutput());
 
+    // Check that the files are included in the right order.
+    $this->drush('drake', array(), array('show-files' => TRUE));
+    $expected_output = "{Loaded drakefiles:
+" . getenv('HOME'). "/.drush/test/user.drakefile.drushrc.php
+" . $this->webroot() . "/sites/all/drush/drakefile.php
+drakefile.php}";
+    // Check output.
+    $this->assertRegExp($expected_output, $this->getOutput());
+
     // Take the site drakefile out of the equation.
     unlink($this->webroot() . '/sites/all/drush/drakefile.php');
     // No target should hit the drakefile in the current dir.

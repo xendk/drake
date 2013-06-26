@@ -114,7 +114,49 @@ function drush_drake() {
   }
 
   $file = drush_get_option('file', NULL);
-  if (!empty($file)) {
+  if (empty($file)) {
+    // Look around if no file specified.
+    // Check current directory if alias was not defined on the command line.
+    if (!drush_get_context('DRUSH_TARGET_SITE_ALIAS')) {
+      // Use a drakefile file in the current directory.
+      if (file_exists('drakefile.php') && !drush_get_option('ignore-current-dir', FALSE)) {
+        $files[] = 'drakefile.php';
+      }
+    }
+    // Add sites/all/drush if we have a boostrapped site.
+    $drupal_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT');
+    if (!empty($drupal_root)) {
+      $site_all = drush_get_context('DRUSH_SELECTED_DRUPAL_SITES_ALL_DRUSH') . '/drakefile.php';
+      if (file_exists($site_all)) {
+        // If there aren't a drakefile in the current directory, consider this
+        // the main one, else use it as an include.
+        if (empty($files)) {
+          $files[] = $site_all;
+        }
+        else {
+          $include_files[] = $site_all;
+        }
+      }
+      // @todo: consider to load sites/<site>/drakefile.php. Check out what
+      //   _drush_config_file does.
+    }
+    // If the above two didn't find anything, make a last ditch effort of
+    // looking in the site profiles.
+    if (empty($files) && !empty($drupal_root)) {
+      $profiles = array_keys(drush_scan_directory($drupal_root . '/profiles', '{.*}', array('.', '..', 'CVS'), 0, FALSE));
+      foreach ($profiles as $profile) {
+        $drakefile = $profile . '/drakefile.php';
+        if (file_exists($drakefile)) {
+          $files[] = $drakefile;
+        }
+      }
+      // Error out if there's more than one candidate.
+      if (sizeof($files) > 1) {
+        return drush_set_error('MULTIPLE_DRAKEFILES', dt('Multiple profile drakefile.phps found, please use --file to specify which to use.'));
+      }
+    }
+  }
+  else {
     // A file was specified, use that.
     $url = parse_url($file);
     if (!empty($url['scheme'])) {
@@ -133,41 +175,6 @@ function drush_drake() {
     }
     $files[] = $file;
   }
-  else {
-    // Else look around.
-    // Add sites/all/drush if we have a boostrapped site.
-    $drupal_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT');
-    if (!empty($drupal_root)) {
-      $site_all = drush_get_context('DRUSH_SELECTED_DRUPAL_SITES_ALL_DRUSH') . '/drakefile.php';
-      if (file_exists($site_all)) {
-        $files[] = $site_all;
-      }
-      // @todo: consider to load sites/<site>/drakefile.php. Check out what
-      //   _drush_config_file does.
-    }
-    // Check current directory if alias was not defined on the command line.
-    if (!drush_get_context('DRUSH_TARGET_SITE_ALIAS')) {
-      // Use a drakefile file in the current directory.
-      if (file_exists('drakefile.php') && !drush_get_option('ignore-current-dir', FALSE)) {
-        $files[] = 'drakefile.php';
-      }
-    }
-    // If the above two didn't find anything, make a last ditch effort of
-    // looking in the site profiles.
-    if (empty($files) && !empty($drupal_root)) {
-      $profiles = array_keys(drush_scan_directory($drupal_root . '/profiles', '{.*}', array('.', '..', 'CVS'), 0, FALSE));
-      foreach ($profiles as $profile) {
-        $drakefile = $profile . '/drakefile.php';
-        if (file_exists($drakefile)) {
-          $files[] = $drakefile;
-        }
-      }
-      // Error out if there's more than one candidate.
-      if (sizeof($files) > 1) {
-        return drush_set_error('MULTIPLE_DRAKEFILES', dt('Multiple profile drakefile.phps found, please use --file to specify which to use.'));
-      }
-    }
-  }
 
   // Bail out if no non-include files and no target was specified, or there's no
   // drakefiles at all.
@@ -175,9 +182,9 @@ function drush_drake() {
     return drush_set_error('NO_DRAKEFILE_FILE', dt('No drakefile.php files found or specified.'));
   }
 
+  // Merge in reverse order as we reverse the list afterwards.
   $files = array_merge($include_files, $files);
 
-  $files = array_reverse($files);
   // @todo make this a separate command?
   if (drush_get_option('show-files', FALSE)) {
     drush_print(dt('Loaded drakefiles:'));
@@ -203,6 +210,7 @@ function drush_drake() {
   }
 
   $realpaths = array();
+  $start_task = NULL;
   foreach ($files as $file) {
     $realpath = realpath($file);
     if (isset($realpaths[$realpath])) {
@@ -216,6 +224,10 @@ function drush_drake() {
     }
     if (!empty($res['tasks'])) {
       $tasks = array_merge($tasks, $res['tasks']);
+      // The first task in non-include file is the default task to run.
+      if (!$start_task && !in_array($file, $include_files)) {
+        $start_task = array_keys($res['tasks'])[0];
+      }
     }
     if (!empty($res['actions'])) {
       $actions = array_merge($actions, $res['actions']);
@@ -278,16 +290,16 @@ function drush_drake() {
     $tasks[$name] = $task;
   }
 
-  // Find the main task we're doing.
+  // Find the main task we're doing, if specified on the command line.
   if (!empty($target)) {
     if (!isset($tasks[$target])) {
       return drush_set_error('UNKNOWN_TASK', dt('Unknown task @task', array('@task' => $target)));
     }
-    $start_task = $tasks[$target];
+    $start_task = $target;
   }
-  else {
-    $start_task = reset($tasks);
-  }
+
+  // Use a task array instead of task name.
+  $start_task = $tasks[$start_task];
 
   // Add in dependent tasks.
   if (!($run_tasks = drake_resolve_dependencies($start_task, $tasks))) {
