@@ -127,14 +127,23 @@ function drake_action_drush($context) {
  */
 function drake_action_drake($context) {
   $args = $options = array();
-  if ($context['task']) {
+  if (!empty($context['task'])) {
     $args[] = $context['task'];
+  }
+  if (!empty($context['arguments'])) {
+    $args = array_merge($args, $context['arguments']);
+  }
+  if (!empty($context['context'])) {
+    foreach ($context['context'] as $name => $val) {
+      $args[] = $name . '=' . $val;
+    }
   }
   $old_dir = NULL;
   if ($context['dir']) {
     $old_dir = getcwd();
     chdir($context['dir']);
   }
+
   $res = drush_invoke_process($context['target'], 'drake', $args, $options, TRUE);
   if ($old_dir) {
     chdir($old_dir);
