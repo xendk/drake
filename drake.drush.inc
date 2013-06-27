@@ -27,6 +27,7 @@ function drake_drush_command() {
       'show-context' => 'List the context for the given (or default) task.',
       'ignore-current-dir' => 'Ignore drakefile.php in the current directory.',
       'all' => '(with --show-tasks) list all tasks, not just those with description.',
+      'skip-tasks' =>  'Skip these tasks (comma separated).'
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
@@ -300,6 +301,10 @@ function drush_drake() {
 
   // Use a task array instead of task name.
   $start_task = $tasks[$start_task];
+
+  if ($skip_tasks = drush_get_option('skip-tasks', '')) {
+    drush_set_context('DRAKE_SKIP_TASKS', explode(',', $skip_tasks));
+  }
 
   // Add in dependent tasks.
   if (!($run_tasks = drake_resolve_dependencies($start_task, $tasks))) {
@@ -627,6 +632,7 @@ function drake_resolve_dependencies(&$task, &$tasks) {
  * Helper for drake_resolve_dependencies().
  */
 function _drake_visit(&$task, &$resolution, &$all_tasks, &$seen, $stack) {
+  $skip_tasks = drush_get_context('DRAKE_SKIP_TASKS', array());
   $seen_id = $task['name'] . $task['#context']->md5();
   if (!isset($seen[$seen_id])) {
     $seen[$seen_id] = TRUE;
@@ -650,6 +656,10 @@ function _drake_visit(&$task, &$resolution, &$all_tasks, &$seen, $stack) {
       }
 
       foreach ($task['depends'] as $dependency_name) {
+        // Skip tasks from --skip-tasks.
+        if (in_array($dependency_name, $skip_tasks)) {
+          continue;
+        }
         // Circular detection.
         if (in_array($dependency_name, $stack)) {
           $chain = join(' -> ', array_merge($stack, array($task['name'], $dependency_name)));

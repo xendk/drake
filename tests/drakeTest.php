@@ -413,6 +413,45 @@ php-module: modules/php/php.install";
 
   }
 
+
+  function testTaskSkip() {
+    copy(dirname(__FILE__) . '/skip.drakefile.php', './drakefile.php');
+
+    $this->drush('drake');
+    // Check that all tasks was run.
+    $this->assertRegExp('/Task 1/', $this->getOutput());
+    $this->assertRegExp('/Task 2/', $this->getOutput());
+    $this->assertRegExp('/Subtask 1/', $this->getOutput());
+    $this->assertRegExp('/Subtask 2/', $this->getOutput());
+    $this->assertRegExp('/Task 4/', $this->getOutput());
+
+    $this->drush('drake', array(), array('skip-tasks' => 'task1,task4'));
+    // Check that all but task 1 and 4 was run.
+    $this->assertNotRegExp('/Task 1/', $this->getOutput());
+    $this->assertRegExp('/Task 2/', $this->getOutput());
+    $this->assertRegExp('/Subtask 1/', $this->getOutput());
+    $this->assertRegExp('/Subtask 2/', $this->getOutput());
+    $this->assertNotRegExp('/Task 4/', $this->getOutput());
+
+    $this->drush('drake', array(), array('skip-tasks' => 'task1,subtask1'));
+    // Check that all but task 1 and subtask 1  was run.
+    $this->assertNotRegExp('/Task 1/', $this->getOutput());
+    $this->assertRegExp('/Task 2/', $this->getOutput());
+    $this->assertNotRegExp('/Subtask 1/', $this->getOutput());
+    $this->assertRegExp('/Subtask 2/', $this->getOutput());
+    $this->assertRegExp('/Task 4/', $this->getOutput());
+
+    $this->drush('drake', array(), array('skip-tasks' => 'task4,task3'));
+    // Check that all but task 1 and subtasks of task 3 was run.
+    $this->assertRegExp('/Task 1/', $this->getOutput());
+    $this->assertRegExp('/Task 2/', $this->getOutput());
+    $this->assertNotRegExp('/Subtask 1/', $this->getOutput());
+    $this->assertNotRegExp('/Subtask 2/', $this->getOutput());
+    $this->assertNotRegExp('/Task 4/', $this->getOutput());
+
+    unlink('./drakefile.php');
+  }
+
   function sortLines($string) {
     $tmp = explode("\n", trim($string));
     sort($tmp);
