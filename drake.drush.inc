@@ -227,7 +227,8 @@ function drush_drake() {
       $tasks = array_merge($tasks, $res['tasks']);
       // The first task in non-include file is the default task to run.
       if (!$start_task && !in_array($file, $include_files)) {
-        $start_task = array_keys($res['tasks'])[0];
+        $task_names = array_keys($res['tasks']);
+        $start_task = $task_names[0];
       }
     }
     if (!empty($res['actions'])) {
