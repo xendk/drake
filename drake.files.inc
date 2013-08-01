@@ -86,7 +86,9 @@ class DrakeFilesPlaceholder implements DrakePlaceholder {
 
     // @todo This is a ineffective way to do it, but this is proof of concept of
     // the file matching functionality. We should do our own scanning.
-    $files = array_keys(drush_scan_directory($this->root, '/.*/'));
+    // Most arguments below are defaults, first ($dir), second ($mask) and the
+    // second to last ($include_dot_files) are non-default.
+    $files = array_keys(drush_scan_directory($this->root, '/.*/', array('.', '..', 'CVS'), 0, TRUE, 'filename', 0, TRUE, 0));
 
     $matched_files = array();
     $length = strlen($this->root) + 1;
