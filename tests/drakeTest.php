@@ -180,6 +180,18 @@ drakefile.php}";
     rmdir(getenv('HOME') . '/.drush/test');
   }
 
+  function testMissingTask() {
+    copy(dirname(__FILE__) . '/simple.drakefile.php', './drakefile.php');
+    // Check that an unknown task fails.
+    $this->drush('drake 2>&1', array('unknown-task'), array(), NULL, NULL, self::EXIT_ERROR);
+    // Check output.
+    $this->assertRegExp('/Unknown task unknown-task/', $this->getOutput());
+
+    // But with the proper argument, it's just quiet.
+    $this->drush('drake', array('unknown-task'), array('no-task-ok' => TRUE));
+    unlink('./drakefile.php');
+  }
+
   function testContexts() {
     copy(dirname(__FILE__) . '/context.drakefile.php', './drakefile.php');
     $this->drush('drake', array('simple'));

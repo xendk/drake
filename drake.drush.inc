@@ -28,6 +28,7 @@ function drake_drush_command() {
       'ignore-current-dir' => 'Ignore drakefile.php in the current directory.',
       'all' => '(with --show-tasks) list all tasks, not just those with description.',
       'skip-tasks' => 'Skip these tasks (comma separated).',
+      'no-task-ok' => "Don't fail if the task is not found.",
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
@@ -302,7 +303,13 @@ function drush_drake() {
   // Find the main task we're doing, if specified on the command line.
   if (!empty($target)) {
     if (!isset($tasks[$target])) {
-      return drush_set_error('UNKNOWN_TASK', dt('Unknown task @task', array('@task' => $target)));
+      if (drush_get_option('no-task-ok', FALSE)) {
+        // Just return quietly.
+        return;
+      }
+      else {
+        return drush_set_error('UNKNOWN_TASK', dt('Unknown task @task', array('@task' => $target)));
+      }
     }
     $start_task = $target;
   }
