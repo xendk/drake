@@ -27,7 +27,7 @@ function drake_drush_command() {
       'show-context' => 'List the context for the given (or default) task.',
       'ignore-current-dir' => 'Ignore drakefile.php in the current directory.',
       'all' => '(with --show-tasks) list all tasks, not just those with description.',
-      'skip-tasks' =>  'Skip these tasks (comma separated).'
+      'skip-tasks' => 'Skip these tasks (comma separated).',
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
   );
@@ -54,8 +54,10 @@ function drake_drush_help($section) {
   switch ($section) {
     case 'meta:drake:title':
       return dt('Drake');
+
     case 'meta:drake:summary':
       return dt('Do stuff.');
+
     case 'drush:drake':
       return dt("Does stuff...");
   }
@@ -87,7 +89,8 @@ function drush_drake() {
       if (!$target) {
         $target = $arg[0];
         continue;
-      } else {
+      }
+      else {
         // If no = was found, name it sequentially.
         $arg[1] = $arg[0];
         $arg[0] = 'arg' . $i++;
@@ -144,7 +147,8 @@ function drush_drake() {
     // If the above two didn't find anything, make a last ditch effort of
     // looking in the site profiles.
     if (empty($files) && !empty($drupal_root)) {
-      $profiles = array_keys(drush_scan_directory($drupal_root . '/profiles', '{.*}', array('.', '..', 'CVS'), 0, FALSE));
+      $exclude = array('.', '..', 'CVS');
+      $profiles = array_keys(drush_scan_directory($drupal_root . '/profiles', '{.*}', $exclude, 0, FALSE));
       foreach ($profiles as $profile) {
         $drakefile = $profile . '/drakefile.php';
         if (file_exists($drakefile)) {
@@ -152,7 +156,7 @@ function drush_drake() {
         }
       }
       // Error out if there's more than one candidate.
-      if (sizeof($files) > 1) {
+      if (count($files) > 1) {
         return drush_set_error('MULTIPLE_DRAKEFILES', dt('Multiple profile drakefile.phps found, please use --file to specify which to use.'));
       }
     }
@@ -263,13 +267,13 @@ function drush_drake() {
           if ($help) {
             $help .= "\n";
           }
-          $help .= "(Depends on: " . join(', ', $task['depends']). ")";
+          $help .= "(Depends on: " . implode(', ', $task['depends']) . ")";
         }
 
         $rows[] = array($task['name'], $help);
       }
     }
-    if (sizeof($rows) > 1) {
+    if (count($rows) > 1) {
       drush_print(dt('Available tasks:'));
       drush_print_table($rows, TRUE);
     }
@@ -474,7 +478,7 @@ function _drake_load_file($_drake_file, $_drake_context) {
     $return['filesets'] = $filesets;
   }
   if (!empty($context)) {
-    foreach($context as $key => $value) {
+    foreach ($context as $key => $value) {
       $_drake_context[$key] = $value;
     }
   }
@@ -554,7 +558,11 @@ function _drake_prepare_task(&$task, &$actions) {
     $muliple_parm = $action['multiple'];
     if ($muliple_parm && isset($task[$muliple_parm . 's'])) {
       if (!empty($task[$muliple_parm])) {
-        return drush_set_error('AMBIGUOUS_PARAM', dt('Action "@action" failed: Both "@singular_parm" and "@plural_parm" cannot be specified.', array('@action' => $action['name'], '@singular_parm' => $muliple_parm, '@plural_parm' => $muliple_parm . 's')));
+        return drush_set_error('AMBIGUOUS_PARAM', dt('Action "@action" failed: Both "@singular_parm" and "@plural_parm" cannot be specified.', array(
+              '@action' => $action['name'],
+              '@singular_parm' => $muliple_parm,
+              '@plural_parm' => $muliple_parm . 's',
+            )));
       }
       $task_actions = array();
       // Explode the multiple parameter to multiple actions.
@@ -581,7 +589,10 @@ function _drake_prepare_task(&$task, &$actions) {
     foreach ($task_actions as $task_action) {
       $diff = array_diff(array_keys($action['parameters']), array_keys($task_action));
       if (!empty($diff)) {
-        return drush_set_error('MISSING_PARAM', dt('Action "@action" failed: Required param(s) not supplied: "@params".', array('@action' => $action['name'], '@params' => join(', ', $diff))));
+        return drush_set_error('MISSING_PARAM', dt('Action "@action" failed: Required param(s) not supplied: "@params".', array(
+              '@action' => $action['name'],
+              '@params' => implode(', ', $diff),
+            )));
       }
     }
 
@@ -663,7 +674,7 @@ function _drake_visit(&$task, &$resolution, &$all_tasks, &$seen, $stack) {
         }
         // Circular detection.
         if (in_array($dependency_name, $stack)) {
-          $chain = join(' -> ', array_merge($stack, array($task['name'], $dependency_name)));
+          $chain = implode(' -> ', array_merge($stack, array($task['name'], $dependency_name)));
           drush_log(dt('Failing dependency chain: @chain.', array('@chain' => $chain)), 'notice');
           return drush_set_error('RECURSIVE_DEPENDENCY', dt('Recursive dependency'));
         }
