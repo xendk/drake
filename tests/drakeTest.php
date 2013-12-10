@@ -66,9 +66,15 @@ class DrakeCase extends Drush_CommandTestCase {
 
     // A drakefile.php in sites/all/drush should be used.
     $this->setUpDrupal(1);
-    // mkdir($this->webroot() . '/sites/all/drush');
+
     copy(dirname(__FILE__) . '/site.drakefile.php',
       $this->webroot() . '/sites/all/drush/drakefile.php');
+
+    // A "site command". Something like a drush command installed in
+    // sites/all/drush.
+    mkdir($this->webroot() . '/sites/all/drush/command');
+    copy(dirname(__FILE__) . '/site-command.drakefile.php',
+      $this->webroot() . '/sites/all/drush/command/command.drakefile.drushrc.php');
 
     $x = $this->webroot();
     $this->log(`ls $x`);
@@ -95,6 +101,12 @@ class DrakeCase extends Drush_CommandTestCase {
     $this->drush('drake');
     // Check output.
     $this->assertRegExp('/Site drakefile\./', $this->getOutput());
+
+    // Check that drake files from commands in sites/all/drush is properly
+    // incleded.
+    $this->drush('drake', array('site-command'));
+    // Check output.
+    $this->assertRegExp('/Site command drakefile\./', $this->getOutput());
 
     // Check that a drakefile in the current directory takes precedence over
     // sitewide.
@@ -124,6 +136,7 @@ class DrakeCase extends Drush_CommandTestCase {
     $expected_output = "{Loaded drakefiles:
 " . getenv('HOME'). "/.drush/test/user.drakefile.drushrc.php
 " . $this->webroot() . "/sites/all/drush/drakefile.php
+" . $this->webroot() . "/sites/all/drush/command/command.drakefile.drushrc.php
 drakefile.php}";
     // Check output.
     $this->assertRegExp($expected_output, $this->getOutput());

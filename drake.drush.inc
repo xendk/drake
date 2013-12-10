@@ -10,7 +10,7 @@ include_once 'drake.files.inc';
 include_once 'drake.actions.inc';
 
 define('DRAKE_API_VERSION', 1);
-
+define('DRAKE_RCFILE_REGEX', '{^(.*\.)?drakefile.drush(' . DRUSH_MAJOR_VERSION . '|)rc.php$}');
 /**
  * Implements hook_drush_command().
  */
@@ -114,7 +114,7 @@ function drush_drake() {
   }
 
   foreach ($dirs as $dir) {
-    $include_files = array_merge($include_files, array_keys(drush_scan_directory($dir, '{^(.*\.)?drakefile.drush(' . DRUSH_MAJOR_VERSION . '|)rc.php$}')));
+    $include_files = array_merge($include_files, array_keys(drush_scan_directory($dir, DRAKE_RCFILE_REGEX)));
   }
 
   $file = drush_get_option('file', NULL);
@@ -141,6 +141,9 @@ function drush_drake() {
           $include_files[] = $site_all;
         }
       }
+      // Add any drushrc drakefiles from any commands in sites/all/drush.
+      $include_files = array_merge($include_files, array_keys(drush_scan_directory(drush_get_context('DRUSH_SELECTED_DRUPAL_SITES_ALL_DRUSH'), DRAKE_RCFILE_REGEX)));
+
       // @todo: consider to load sites/<site>/drakefile.php. Check out what
       //   _drush_config_file does.
     }
