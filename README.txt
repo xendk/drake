@@ -19,8 +19,8 @@ $tasks and $actions, respectively.
 
 An action is the implementation of something to do, such as syncing a
 database or running a Drush command. At the moment the selection is
-rather bare, but an healthy selection of standard things you might
-want to do with a Drupal site is planned.
+rather bare, but the default set of running shell, drush and drake
+commands should go a long way.
 
 Tasks specify which actions you want to run, how, and in which
 order. Tasks is much like the targets of traditional make(1), as
@@ -35,7 +35,7 @@ which will make Drake run the depended upon tasks before running
 the given task.
 
 An example:
-@todo
+
 <?php
 
 $tasks['default'] = array(
@@ -75,8 +75,8 @@ When run in a Drupal install: A drakefile.php in any profile in
 the profiles folder (but only if just one is found in all profiles).
 
 In any case, any *.drakefile.drushrc.php files found in any directory
-in the users .drush folder is included before loading the main
-drakefile.php, but no default tasks is run in those.
+in the users .drush folder or sites/all/drush is included before
+loading the main drakefile.php, but no default tasks is run in those.
 
 Actions
 =======
