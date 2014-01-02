@@ -131,19 +131,25 @@ function drush_drake() {
     // Add sites/all/drush if we have a boostrapped site.
     $drupal_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT');
     if (!empty($drupal_root)) {
-      $site_all = drush_get_context('DRUSH_SELECTED_DRUPAL_SITES_ALL_DRUSH') . '/drakefile.php';
-      if (file_exists($site_all)) {
-        // If there aren't a drakefile in the current directory, consider this
-        // the main one, else use it as an include.
-        if (empty($files)) {
-          $files[] = $site_all;
+      $paths = array(
+        $drupal_root . '/drush',
+        $drupal_root . '/sites/all/drush',
+      );
+      foreach ($paths as $path) {
+        $all_sites_file = $path . '/drakefile.php';
+        if (file_exists($all_sites_file)) {
+          // If there aren't a drakefile in the current directory, consider this
+          // the main one, else use it as an include.
+          if (empty($files)) {
+            $files[] = $all_sites_file;
+          }
+          else {
+            $include_files[] = $all_sites_file;
+          }
         }
-        else {
-          $include_files[] = $site_all;
-        }
+        // Add any drushrc drakefiles from any commands in sites/all/drush.
+        $include_files = array_merge($include_files, array_keys(drush_scan_directory($path, DRAKE_RCFILE_REGEX)));
       }
-      // Add any drushrc drakefiles from any commands in sites/all/drush.
-      $include_files = array_merge($include_files, array_keys(drush_scan_directory(drush_get_context('DRUSH_SELECTED_DRUPAL_SITES_ALL_DRUSH'), DRAKE_RCFILE_REGEX)));
 
       // @todo: consider to load sites/<site>/drakefile.php. Check out what
       //   _drush_config_file does.
