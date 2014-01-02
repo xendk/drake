@@ -45,6 +45,14 @@ class DrakeCase extends Drush_CommandTestCase {
   //   file_put_contents(UNISH_SANDBOX . '/etc/drush/aliases.drushrc.php', $this->file_aliases($this->aliases));
   // }
 
+  function setUpDrupal($num_sites = 1, $install = FALSE, $version_string = UNISH_DRUPAL_MAJOR_VERSION, $profile = NULL) {
+    // Remove any old sites.
+    $root = $this->webroot();
+    $sites = "$root/sites/*";
+    `rm -rf $sites`;
+    return parent::setUpDrupal($num_sites, $install, $version_string, $profile);
+  }
+
   function testRecursiveFail() {
     $this->drush('drake 2>&1', array('recur1'), $this->options, NULL, NULL, self::EXIT_ERROR);
     // Check error message.
