@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/xendk/drake.png?branch=7.x-1.x)](https://travis-ci.org/xendk/drake)
+
 Drush Drake
 ===========
 
@@ -36,6 +38,7 @@ the given task.
 
 An example:
 
+```php
 <?php
 
 $tasks['default'] = array(
@@ -56,6 +59,7 @@ $tasks['second-task'] = array(
 );
 
 ?>
+```
 
 With the above drakefile.php, running drush drake with no arguments
 will run the tasks depended on by the default task before running the
@@ -84,6 +88,7 @@ Actions
 Custom actions can be defined in $actions of a drakefile. The simplest
 case looks like this:
 
+```php
 <?php
 
 $actions['my-action'] = array(
@@ -94,6 +99,7 @@ function action_callback($context) {
 }
 
 ?>
+```
 
 The context passed to action callbacks is the task being run. An
 action can define what task properties it requires or uses by
@@ -126,6 +132,7 @@ Contexts
 As running tasks with hard coded values rather limits the reusability of
 tasks, we have contexts. They allows you to pass arguments to tasks, and follows the dependency chain. 
 
+```php
 <?php
 
 $tasks['echo-task'] = array(
@@ -142,6 +149,7 @@ $tasks['do-echo'] = array(
 );
 
 ?>
+```
 
 When the echo-task runs as a dependency of do-echo, the echo-string
 context is set to "Hello world!". If do-echo didn't have that context,
@@ -154,9 +162,11 @@ site (if any).
 
 Contexts may also specify an format for the string, for example:
 
+```php
 <?php
   'args' => context('--file=[filename]'),
 ?>
+```
 
 will replace the `filename` context into the string, and use that as
 args.
@@ -166,9 +176,11 @@ instead, which takes another, optional, argument which is the default
 value. If the default argument is not used, or it is null, the
 property will be removed if the context is not available. For example:
 
+```php
 <?php
   'args' => context_optional('--file=[filename]'),
 ?>
+```
 
 Will remove the `args` key if the context was not found.
 
@@ -179,7 +191,9 @@ As static strings is somewhat limited in their usage, contexts (and
 arguments, more on those later) supports working with the context
 value by using "ops". A practical example:
 
+```php
   'path' => context('[@prod:site:root]'),
+```
 
 This will set the path context to the root path of the @prod
 alias. Ops works from left to right, in the above case starting with
@@ -223,6 +237,7 @@ When using arguments, you should use drake_argument() (or
 drake_argument_optional()), instead of context(), as it will provide
 the user with more informal error messages. An example:
 
+```php
 <?php
 
 $tasks['echo-task'] = array(
@@ -232,6 +247,7 @@ $tasks['echo-task'] = array(
 );
 
 ?>
+```
 
 Will take the first argument on the command line not of the key=val
 form and echo it.
